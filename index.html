@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Merli Math" />
   <meta name="theme-color" content="#2563eb" />
-  <title>Merli Math Buddy — Singapore MOE P1 to PSLE Interactive Math</title>
+  <title>Merli Math Buddy — Singapore MOE P1 to PSLE EdTech Platform</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%232563eb'/><text x='50' y='68' font-size='60' text-anchor='middle'>🦁</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,35 +23,36 @@
         <div class="brand-logo" aria-hidden="true">🦁</div>
         <div>
           <h1 class="brand-title">Merli Math Buddy <span class="badge-sg">SG MOE P1 → PSLE</span></h1>
-          <p class="brand-subtitle">Interactive Singapore Math Adventure &amp; Infinite Question Engine</p>
+          <p class="brand-subtitle">Singapore Math Adventure, Skill Diagnostics &amp; Cloud Sync</p>
         </div>
       </div>
 
-      <!-- Mode Switcher: Kid Zone vs Parent Corner -->
+      <!-- Mode Switcher: Kid Zone vs Parent Analytics & PSLE Corner -->
       <nav class="mode-nav" aria-label="App Mode">
         <button type="button" class="mode-btn active" id="tabKidBtn" data-mode="kid" aria-current="page">
           <span class="mode-icon">🗺️</span>
           <span>Kid's Adventure</span>
         </button>
         <button type="button" class="mode-btn" id="tabDadBtn" data-mode="dad">
-          <span class="mode-icon">🧭</span>
-          <span>Parent's PSLE Corner</span>
+          <span class="mode-icon">📊</span>
+          <span>Parent Analytics &amp; PSLE</span>
         </button>
       </nav>
 
-      <!-- Quick Stats & Reward Buttons -->
+      <!-- Quick Stats, Profile Switcher & Reward Buttons -->
       <div class="stats-bar" aria-label="Student Progress">
+        <button type="button" class="profile-pill-btn" id="openAccountBtn" title="Switch Student Profile, Login or Cloud Sync">
+          <span id="activeProfileAvatar">🦁</span>
+          <strong id="activeProfileName">Junior</strong>
+          <span class="sync-dot" id="syncStatusDot" title="Saved">●</span>
+        </button>
+
         <div class="stat-pill star-pill" title="Stars Earned">
           <span>⭐</span>
           <strong id="starCount">25</strong>
         </div>
-        <div class="stat-pill streak-pill" title="Total Questions Solved">
-          <span>🏆</span>
-          <strong id="solvedCount">0</strong>
-          <span class="stat-unit">solved</span>
-        </div>
         <button type="button" class="sticker-btn" id="openStickerBookBtn" title="Open Singapore Sticker Book">
-          📖 Stickers (<span id="stickerCountLabel">0/15</span>)
+          📖 <span id="stickerCountLabel">0/15</span>
         </button>
         <button type="button" class="shop-btn" id="openPetShopBtn" title="Open Merli's Reward Shop">
           🎁 Shop
@@ -232,7 +233,7 @@
               <p class="question-vi" id="questionHintText" hidden>Loading hint...</p>
             </div>
 
-            <!-- Dynamic Visual Canvas (Number Bonds / Bar Model / Visual Counters / Clocks / Coins / Patterns) -->
+            <!-- Dynamic Visual Canvas -->
             <div class="visual-workspace" id="visualWorkspace" aria-live="polite">
               <!-- Populated dynamically by app.js -->
             </div>
@@ -245,7 +246,7 @@
               </div>
             </div>
 
-            <!-- Feedback Banner (shown after answering) -->
+            <!-- Feedback Banner -->
             <div class="feedback-banner" id="feedbackBanner" hidden>
               <div class="feedback-content">
                 <span class="feedback-icon" id="feedbackIcon">🎉</span>
@@ -263,12 +264,82 @@
       </div>
     </section>
 
-    <!-- ==================== VIEW 2: PARENT'S PSLE STRATEGY CORNER ==================== -->
+    <!-- ==================== VIEW 2: PARENT ANALYTICS & PSLE STRATEGY CORNER ==================== -->
     <section id="dadView" class="view-section" aria-labelledby="dadViewHeading" hidden>
+      <!-- EdTech Diagnostic Analytics Dashboard -->
+      <div class="analytics-panel card">
+        <div class="analytics-header">
+          <div>
+            <span class="badge-dad">📊 Live EdTech Skill Diagnostics</span>
+            <h2 id="dadViewHeading">Student Performance &amp; Weakness Report: <span id="reportChildName">Junior</span></h2>
+            <p class="section-sub">Tracks first-try accuracy and response speed across every MOE Primary 1 subskill to pinpoint areas needing parent coaching.</p>
+          </div>
+          <div class="analytics-actions">
+            <button type="button" class="btn-outline-sm" id="openAccountFromReportBtn">
+              👤 Switch Student / Cloud Sync
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <span class="kpi-label">First-Try Accuracy</span>
+            <strong class="kpi-value" id="kpiAccuracy">--%</strong>
+            <small id="kpiAccuracySub">Target for AL1: ≥ 85%</small>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Total Questions Solved</span>
+            <strong class="kpi-value" id="kpiTotalSolved">0</strong>
+            <small id="kpiTotalAttemptsSub">0 total attempts</small>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Avg Response Speed</span>
+            <strong class="kpi-value" id="kpiAvgSpeed">--s</strong>
+            <small>Paper 1 fluency benchmark</small>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Stickers Unlocked</span>
+            <strong class="kpi-value" id="kpiStickers">0 / 15</strong>
+            <small>Across 5 SG Worlds</small>
+          </div>
+        </div>
+
+        <!-- Weakness Radar / Recommended Action -->
+        <div class="weakness-radar-box" id="weaknessRadarBox">
+          <h4>🎯 Diagnostic Coaching Recommendations</h4>
+          <div id="weaknessListContainer">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Skill Mastery Breakdown Table -->
+        <div class="skill-table-wrapper">
+          <h4>📋 Skill-by-Skill Mastery Breakdown (MOE P1 Syllabus)</h4>
+          <table class="skill-table">
+            <thead>
+              <tr>
+                <th>MOE Subskill</th>
+                <th>World</th>
+                <th>Attempts</th>
+                <th>1st-Try Accuracy</th>
+                <th>Avg Time</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="skillTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PSLE Blueprint Hero -->
       <div class="dad-hero card">
         <div>
           <span class="badge-dad">Parent's Strategic Guide</span>
-          <h2 id="dadViewHeading">From Primary 1 to PSLE (P6): The Singapore Math Blueprint</h2>
+          <h2>From Primary 1 to PSLE (P6): The Singapore Math Blueprint</h2>
           <p>
             In Singapore MOE schools, formal exams in Primary 1 and Primary 2 were removed so children can build deep conceptual understanding without exam anxiety.
             However, the <strong>Primary 6 PSLE Mathematics</strong> exam is famous for challenging non-routine heuristics and multi-step word problems.
@@ -326,7 +397,7 @@
 
             <details class="roadmap-item" name="psle-roadmap">
               <summary class="roadmap-summary">
-                <span class="phase-pill phase-2">Stage 3: Primary 5 &amp; 6 (PSLE)</span>
+                <span class="phase-pill phase-3">Stage 3: Primary 5 &amp; 6 (PSLE)</span>
                 <strong>Fractions/Ratio/Percentage Integration &amp; Paper 2 Heuristics</strong>
               </summary>
               <div class="roadmap-body">
@@ -340,7 +411,7 @@
           </div>
         </div>
 
-        <!-- Right Column: CPA Method Guide + P1 Math Keywords -->
+        <!-- Right Column: iPad Guide + P1 Math Keywords -->
         <div class="dad-side-column">
           <div class="card cpa-guide-card">
             <h3>📱 How to Install as an iPad App (Add to Home Screen)</h3>
@@ -349,7 +420,7 @@
                 <span class="cpa-badge">1</span>
                 <div>
                   <strong>Open in Safari on iPad</strong>
-                  <p>Visit your GitHub Pages link on your iPad's Safari browser.</p>
+                  <p>Visit your GitHub Pages / Cloudflare Pages link on your iPad's Safari browser.</p>
                 </div>
               </div>
               <div class="cpa-step">
@@ -452,6 +523,75 @@
       <form method="dialog" class="dialog-footer">
         <span class="light-dismiss-hint">Tap outside or press Close</span>
         <button type="submit" class="btn-primary">Keep Exploring</button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ==================== MODAL 4: MULTI-USER PROFILES & CLOUDFLARE SYNC (LIGHT DISMISS) ==================== -->
+  <dialog id="accountDialog" closedby="any" aria-labelledby="accountDialogTitle" class="custom-dialog dialog-wide">
+    <div class="dialog-inner">
+      <div class="dialog-header">
+        <span class="badge-dad">☁️ Multi-User Profiles &amp; Cloud Save</span>
+        <h3 id="accountDialogTitle">Student Profiles &amp; Parent Cloud Account</h3>
+        <p class="shop-balance">Switch between children or sync progress across iPad &amp; Desktop via Cloudflare D1 / Backup Code.</p>
+      </div>
+
+      <div class="dialog-body">
+        <!-- Section A: Active Student Profiles -->
+        <div class="tip-block">
+          <h4>👦👧 1. Select or Add a Student Profile</h4>
+          <div class="profiles-list" id="profilesListGrid">
+            <!-- Populated by JS -->
+          </div>
+
+          <div class="add-profile-row">
+            <select id="newProfileAvatar" aria-label="Choose Avatar">
+              <option value="🦁">🦁 Merli</option>
+              <option value="🐼">🐼 Panda</option>
+              <option value="🦊">🦊 Fox</option>
+              <option value="🐰">🐰 Bunny</option>
+              <option value="🐯">🐯 Tiger</option>
+              <option value="🦄">🦄 Unicorn</option>
+            </select>
+            <input type="text" id="newProfileNameInput" placeholder="Enter child's name (e.g. Leo)" maxlength="18" />
+            <button type="button" class="btn-primary" id="addProfileBtn">+ Add Student</button>
+          </div>
+        </div>
+
+        <!-- Section B: Cloudflare Worker + D1 Cloud Account Login -->
+        <div class="tip-block tip-psle-link">
+          <h4>☁️ 2. Parent Cloud Account (Cloudflare Worker + D1 Sync)</h4>
+          <p style="font-size: 0.82rem; margin-bottom: 0.6rem;">
+            Sign in to sync profiles and diagnostic logs across devices. (Uses your Cloudflare Worker API URL or local encrypted vault if offline).
+          </p>
+          <div class="cloud-auth-grid">
+            <input type="email" id="cloudEmailInput" placeholder="Parent Email (e.g. dad@example.com)" />
+            <input type="password" id="cloudPasswordInput" placeholder="Password (min 4 chars)" />
+            <input type="url" id="cloudApiUrlInput" placeholder="Optional: Cloudflare Worker URL (https://...workers.dev)" />
+          </div>
+          <div class="cloud-auth-actions">
+            <button type="button" class="btn-primary" id="cloudLoginBtn">☁️ Sign In / Register &amp; Sync</button>
+            <span class="cloud-status-msg" id="cloudStatusMsg">Status: Local + Instant Sync Ready</span>
+          </div>
+        </div>
+
+        <!-- Section C: Instant Cross-Device Sync Code (iPad <-> Mac without setup) -->
+        <div class="tip-block">
+          <h4>📲 3. Instant iPad ↔ Desktop Transfer Code</h4>
+          <p style="font-size: 0.8rem; margin-bottom: 0.5rem;">
+            Copy this code to transfer all profiles, stars, stickers, and analytics to another iPad or computer immediately:
+          </p>
+          <div class="sync-code-row">
+            <input type="text" id="syncCodeInput" placeholder="Paste transfer code here or click Export..." />
+            <button type="button" class="btn-outline-sm" id="exportSyncCodeBtn">📋 Copy Code</button>
+            <button type="button" class="btn-outline-sm" id="importSyncCodeBtn">📥 Restore Code</button>
+          </div>
+        </div>
+      </div>
+
+      <form method="dialog" class="dialog-footer">
+        <span class="light-dismiss-hint">Tap outside or press Close</span>
+        <button type="submit" class="btn-primary">Done</button>
       </form>
     </div>
   </dialog>

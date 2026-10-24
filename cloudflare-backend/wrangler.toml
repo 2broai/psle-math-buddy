@@ -1,0 +1,14 @@
+name = "merli-math-api"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# Bind your Cloudflare D1 Database (Free Tier: 5GB storage, 5M reads/day)
+# 1. Run: npx wrangler d1 create merli-math-db
+# 2. Paste the returned database_id below
+# 3. Run: npx wrangler d1 execute merli-math-db --remote --file=./schema.sql
+# 4. Run: npx wrangler deploy
+
+[[d1_databases]]
+binding = "DB"
+database_name = "merli-math-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"

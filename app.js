@@ -1,6 +1,7 @@
-// Merli Math Buddy v2.0 — Infinite Singapore MOE P1 -> PSLE Question Engine & Adventure Map
+// Merli Math Buddy v3.0 — EdTech Multi-User, Skill Weakness Analytics & Cloudflare D1 Sync
 
-const STORAGE_KEY = 'merli_psle_buddy_en_v2';
+const STORAGE_KEY = 'merli_psle_buddy_en_v3';
+const ACCOUNT_KEY = 'merli_edtech_account_v3';
 
 const defaultState = {
   stars: 25,
@@ -16,6 +17,7 @@ const defaultState = {
     patterns: 0,
     moneytime: 0
   },
+  skillStats: {},
   equippedHat: '',
   equippedItem: '',
   ownedItems: [],
@@ -25,28 +27,76 @@ const defaultState = {
   soundOn: true
 };
 
-let state = loadState();
+const defaultAccount = {
+  parentId: 'local-parent-1',
+  parentEmail: '',
+  cloudApiUrl: '',
+  activeProfileId: 'child-1',
+  profiles: [
+    {
+      id: 'child-1',
+      childName: 'Junior',
+      avatar: '🦁',
+      state: structuredClone(defaultState)
+    }
+  ]
+};
+
+let account = loadAccount();
+let state = getActiveProfile().state;
 let currentQuestion = null;
 let sessionSeconds = 0;
+let questionStartTime = Date.now();
+let wrongClicksThisQuestion = 0;
 const recentSignatures = [];
 
-function loadState() {
+function normalizeChildState(rawState) {
+  return {
+    ...structuredClone(defaultState),
+    ...(rawState || {}),
+    worldSolved: { ...defaultState.worldSolved, ...(rawState?.worldSolved || {}) },
+    skillStats: { ...(rawState?.skillStats || {}) }
+  };
+}
+
+function loadAccount() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return structuredClone(defaultState);
-    const parsed = JSON.parse(raw);
-    return {
-      ...defaultState,
-      ...parsed,
-      worldSolved: { ...defaultState.worldSolved, ...(parsed.worldSolved || {}) }
-    };
+    const raw = localStorage.getItem(ACCOUNT_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.profiles) && parsed.profiles.length > 0) {
+        parsed.profiles = parsed.profiles.map((p) => ({
+          ...p,
+          state: normalizeChildState(p.state)
+        }));
+        return { ...defaultAccount, ...parsed };
+      }
+    }
+    // Migrate v2 state if present
+    const v2Raw = localStorage.getItem('merli_psle_buddy_en_v2');
+    const initialChildState = v2Raw ? normalizeChildState(JSON.parse(v2Raw)) : structuredClone(defaultState);
+    const fresh = structuredClone(defaultAccount);
+    fresh.profiles[0].state = initialChildState;
+    return fresh;
   } catch {
-    return { ...defaultState, worldSolved: { ...defaultState.worldSolved } };
+    return structuredClone(defaultAccount);
   }
+}
+
+function getActiveProfile() {
+  let prof = account.profiles.find((p) => p.id === account.activeProfileId);
+  if (!prof) {
+    prof = account.profiles[0];
+    account.activeProfileId = prof.id;
+  }
+  return prof;
 }
 
 function saveState() {
   try {
+    const prof = getActiveProfile();
+    prof.state = state;
+    localStorage.setItem(ACCOUNT_KEY, JSON.stringify(account));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
     // ignore storage quota errors
@@ -1177,8 +1227,13 @@ function getUnlockedStickerCount() {
 }
 
 function updateHeaderAndPetUI() {
+  const activeProf = getActiveProfile();
+  const avatarEl = document.getElementById('activeProfileAvatar');
+  const nameEl = document.getElementById('activeProfileName');
+  if (avatarEl) avatarEl.textContent = activeProf.avatar || '🦁';
+  if (nameEl) nameEl.textContent = activeProf.childName || 'Junior';
+
   document.getElementById('starCount').textContent = state.stars;
-  document.getElementById('solvedCount').textContent = state.totalSolved;
   document.getElementById('shopStarBalance').textContent = state.stars;
 
   const unlockedStickers = getUnlockedStickerCount();
@@ -1243,6 +1298,25 @@ function triggerPetBounce(speechText, moodText = '🤩 Awesome!') {
   setTimeout(() => charEl.classList.remove('bounce'), 500);
 }
 
+function recordSkillAttempt(isFirstTryCorrect, timeSpentMs) {
+  if (!currentQuestion) return;
+  const key = currentQuestion.subskill || 'General P1 Skill';
+  if (!state.skillStats) state.skillStats = {};
+  if (!state.skillStats[key]) {
+    state.skillStats[key] = {
+      world: state.topic,
+      difficulty: state.difficulty,
+      attempts: 0,
+      firstTryCorrect: 0,
+      totalTimeMs: 0
+    };
+  }
+  const entry = state.skillStats[key];
+  entry.attempts += 1;
+  if (isFirstTryCorrect) entry.firstTryCorrect += 1;
+  entry.totalTimeMs += Math.min(timeSpentMs, 60000);
+}
+
 function awardProgress(starsEarned, xpEarned) {
   const prevWorldSolved = state.worldSolved[state.topic] || 0;
   const newWorldSolved = prevWorldSolved + 1;
@@ -1286,9 +1360,212 @@ function awardProgress(starsEarned, xpEarned) {
 
   saveState();
   updateHeaderAndPetUI();
+  triggerBackgroundCloudSync();
 
   if (specialAnnouncement) {
     triggerPetBounce(specialAnnouncement, '🥳 Superstar!');
+  }
+}
+
+// ==================== PARENT ANALYTICS & WEAKNESS ENGINE ====================
+function renderParentAnalyticsDashboard() {
+  const activeProf = getActiveProfile();
+  document.getElementById('reportChildName').textContent = `${activeProf.avatar} ${activeProf.childName}`;
+
+  const statsEntries = Object.entries(state.skillStats || {});
+  let totalAtt = 0;
+  let totalFirstCorrect = 0;
+  let totalMs = 0;
+
+  statsEntries.forEach(([, st]) => {
+    totalAtt += st.attempts || 0;
+    totalFirstCorrect += st.firstTryCorrect || 0;
+    totalMs += st.totalTimeMs || 0;
+  });
+
+  const accPct = totalAtt > 0 ? Math.round((totalFirstCorrect / totalAtt) * 100) : null;
+  const avgSec = totalAtt > 0 ? (totalMs / totalAtt / 1000).toFixed(1) : null;
+
+  document.getElementById('kpiAccuracy').textContent = accPct !== null ? `${accPct}%` : '--%';
+  document.getElementById('kpiTotalSolved').textContent = state.totalSolved || 0;
+  document.getElementById('kpiTotalAttemptsSub').textContent = `${totalAtt} tracked skill attempts`;
+  document.getElementById('kpiAvgSpeed').textContent = avgSec !== null ? `${avgSec}s` : '--s';
+  document.getElementById('kpiStickers').textContent = `${getUnlockedStickerCount()} / 15`;
+
+  // Weakness Radar
+  const radarContainer = document.getElementById('weaknessListContainer');
+  radarContainer.innerHTML = '';
+
+  const weakSkills = statsEntries
+    .map(([name, st]) => ({
+      name,
+      ...st,
+      acc: st.attempts > 0 ? Math.round((st.firstTryCorrect / st.attempts) * 100) : 100,
+      avgS: st.attempts > 0 ? st.totalTimeMs / st.attempts / 1000 : 0
+    }))
+    .filter((item) => item.acc < 80 || item.avgS > 18)
+    .sort((a, b) => a.acc - b.acc);
+
+  if (statsEntries.length === 0) {
+    radarContainer.innerHTML = `
+      <p style="font-size: 0.88rem; color: #7c2d12;">
+        No diagnostic data yet for <strong>${activeProf.childName}</strong>. Have your child solve 3–5 questions in Kid's Adventure to generate real-time weakness diagnostics!
+      </p>
+    `;
+  } else if (weakSkills.length === 0) {
+    radarContainer.innerHTML = `
+      <p style="font-size: 0.88rem; color: #166534; font-weight: 700;">
+        🌟 Outstanding! ${activeProf.childName} has ≥ 80% first-try accuracy across all practiced skills. Try switching difficulty to "🚀 Core" or "🏆 Challenge (PSLE Seeds)"!
+      </p>
+    `;
+  } else {
+    weakSkills.forEach((ws) => {
+      const div = document.createElement('div');
+      div.className = 'weakness-item';
+      div.innerHTML = `
+        <div>
+          <strong>⚠️ ${ws.name}</strong>
+          <div style="font-size: 0.78rem; color: #7c2d12;">
+            First-Try Accuracy: <strong>${ws.acc}%</strong> (${ws.firstTryCorrect}/${ws.attempts}) • Avg Speed: <strong>${ws.avgS.toFixed(1)}s</strong>
+          </div>
+        </div>
+        <button type="button" class="btn-outline-sm" data-world="${ws.world}" data-diff="${ws.difficulty || 'starter'}">
+          🎯 Coach &amp; Practice Now
+        </button>
+      `;
+      div.querySelector('button').addEventListener('click', () => {
+        jumpToWorldPractice(ws.world, ws.difficulty || 'starter');
+      });
+      radarContainer.appendChild(div);
+    });
+  }
+
+  // Skill Breakdown Table
+  const tbody = document.getElementById('skillTableBody');
+  tbody.innerHTML = '';
+
+  const worldNames = {
+    bonds: '🌊 Merlion Bay',
+    barmodel: '🎡 Marina Flyer',
+    wordprob: '🌳 Gardens by the Bay',
+    patterns: '🦖 Sentosa Island',
+    moneytime: '✈️ Jewel Changi'
+  };
+
+  if (statsEntries.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; color: #64748b; padding: 1.2rem;">
+          Solve questions in Kid's Adventure to populate the skill mastery table.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  statsEntries.forEach(([subskillName, st]) => {
+    const acc = st.attempts > 0 ? Math.round((st.firstTryCorrect / st.attempts) * 100) : 0;
+    const avgS = st.attempts > 0 ? (st.totalTimeMs / st.attempts / 1000).toFixed(1) : '0.0';
+    let badgeClass = 'status-mastered';
+    let badgeText = '🟢 Mastered (AL1)';
+    if (acc < 65) {
+      badgeClass = 'status-weak';
+      badgeText = '🔴 Needs Coaching';
+    } else if (acc < 85) {
+      badgeClass = 'status-developing';
+      badgeText = '🟡 Developing';
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${subskillName}</strong></td>
+      <td>${worldNames[st.world] || st.world}</td>
+      <td>${st.attempts}</td>
+      <td><strong>${acc}%</strong> (${st.firstTryCorrect}/${st.attempts})</td>
+      <td>${avgS}s</td>
+      <td><span class="status-pill ${badgeClass}">${badgeText}</span></td>
+      <td>
+        <button type="button" class="btn-outline-sm" style="padding: 0.22rem 0.55rem; font-size: 0.76rem;">
+          Practice ➡️
+        </button>
+      </td>
+    `;
+    tr.querySelector('button').addEventListener('click', () => {
+      jumpToWorldPractice(st.world, st.difficulty || 'starter');
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+function jumpToWorldPractice(world, difficulty) {
+  state.topic = world;
+  state.difficulty = difficulty;
+  saveState();
+
+  document.getElementById('difficultySelect').value = difficulty;
+  document.querySelectorAll('.island-tab').forEach((t) => {
+    const active = t.dataset.topic === world;
+    t.classList.toggle('active', active);
+    t.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+
+  // Switch back to Kid View
+  document.getElementById('tabKidBtn').click();
+  loadQuestion();
+}
+
+// ==================== MULTI-USER & CLOUDFLARE SYNC LOGIC ====================
+function renderAccountModal() {
+  const listEl = document.getElementById('profilesListGrid');
+  listEl.innerHTML = '';
+
+  account.profiles.forEach((prof) => {
+    const isActive = prof.id === account.activeProfileId;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `profile-card-btn ${isActive ? 'active' : ''}`;
+    btn.innerHTML = `
+      <span class="profile-card-emoji">${prof.avatar || '🦁'}</span>
+      <div>
+        <strong>${prof.childName} ${isActive ? '✓' : ''}</strong>
+        <div style="font-size: 0.75rem; color: #475569;">
+          ⭐ ${prof.state?.stars ?? 25} • 🏆 ${prof.state?.totalSolved ?? 0} solved
+        </div>
+      </div>
+    `;
+    btn.addEventListener('click', () => {
+      account.activeProfileId = prof.id;
+      state = prof.state;
+      saveState();
+      updateHeaderAndPetUI();
+      renderAccountModal();
+      renderParentAnalyticsDashboard();
+      loadQuestion();
+    });
+    listEl.appendChild(btn);
+  });
+
+  document.getElementById('cloudEmailInput').value = account.parentEmail || '';
+  document.getElementById('cloudApiUrlInput').value = account.cloudApiUrl || '';
+}
+
+async function triggerBackgroundCloudSync() {
+  if (!account.cloudApiUrl || !account.parentId) return;
+  const activeProf = getActiveProfile();
+  try {
+    await fetch(`${account.cloudApiUrl.replace(/\/$/, '')}/api/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        parentId: account.parentId,
+        childId: activeProf.id,
+        childName: activeProf.childName,
+        avatar: activeProf.avatar,
+        state: activeProf.state
+      })
+    });
+  } catch {
+    // offline-first resilience
   }
 }
 
@@ -1573,6 +1850,8 @@ function renderMoneyTimeWorkspace(q) {
 // ==================== LOAD ACTIVE QUESTION ====================
 function loadQuestion() {
   currentQuestion = createFreshQuestion();
+  questionStartTime = Date.now();
+  wrongClicksThisQuestion = 0;
 
   const worldLabels = {
     bonds: '🌊 Merlion Bay • Number Bonds',
@@ -1637,6 +1916,9 @@ function handleChoiceClick(selectedVal, btnEl) {
       b.disabled = true;
     });
 
+    const elapsedMs = Date.now() - questionStartTime;
+    recordSkillAttempt(wrongClicksThisQuestion === 0, elapsedMs);
+
     renderWorkspaceState(currentQuestion.answer);
 
     banner.hidden = false;
@@ -1648,6 +1930,7 @@ function handleChoiceClick(selectedVal, btnEl) {
     triggerPetBounce('Awesome job! You solved it like a Singapore Math champion! +5 ⭐', '🤩 Proud');
     awardProgress(5, 20);
   } else {
+    wrongClicksThisQuestion += 1;
     playSoundFX('wrong');
     btnEl.classList.add('wrong');
     btnEl.disabled = true;
@@ -1815,7 +2098,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.soundOn) playSoundFX('correct');
   });
 
-  // Mode Switcher (Kid vs Parent)
+  // Mode Switcher (Kid vs Parent Analytics)
   const tabKidBtn = document.getElementById('tabKidBtn');
   const tabDadBtn = document.getElementById('tabDadBtn');
   const kidView = document.getElementById('kidView');
@@ -1833,6 +2116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tabKidBtn.classList.remove('active');
     dadView.hidden = false;
     kidView.hidden = true;
+    renderParentAnalyticsDashboard();
   });
 
   // 5 Island Tabs on Adventure Map
@@ -1921,6 +2205,142 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   document.getElementById('openPetShopBtn').addEventListener('click', openShop);
   document.getElementById('openPetShopMiniBtn').addEventListener('click', openShop);
+
+  // Account & Multi-Profile Modal Openers
+  const openAccount = () => {
+    renderAccountModal();
+    document.getElementById('accountDialog').showModal();
+  };
+  document.getElementById('openAccountBtn').addEventListener('click', openAccount);
+  document.getElementById('openAccountFromReportBtn').addEventListener('click', openAccount);
+
+  // Add Student Profile
+  document.getElementById('addProfileBtn').addEventListener('click', () => {
+    const nameInput = document.getElementById('newProfileNameInput');
+    const avatarSelect = document.getElementById('newProfileAvatar');
+    const name = nameInput.value.trim();
+    if (!name) return;
+
+    const newId = `child-${Date.now()}`;
+    const newProf = {
+      id: newId,
+      childName: name,
+      avatar: avatarSelect.value || '🦁',
+      state: structuredClone(defaultState)
+    };
+    account.profiles.push(newProf);
+    account.activeProfileId = newId;
+    state = newProf.state;
+    nameInput.value = '';
+    saveState();
+    updateHeaderAndPetUI();
+    renderAccountModal();
+    renderParentAnalyticsDashboard();
+    loadQuestion();
+    playSoundFX('fanfare');
+  });
+
+  // Cloud Sign In / Sync Button
+  document.getElementById('cloudLoginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('cloudEmailInput').value.trim().toLowerCase();
+    const password = document.getElementById('cloudPasswordInput').value;
+    const apiUrl = document.getElementById('cloudApiUrlInput').value.trim();
+    const statusEl = document.getElementById('cloudStatusMsg');
+
+    if (!email || password.length < 4) {
+      statusEl.textContent = '⚠️ Enter a valid email & password (min 4 chars).';
+      return;
+    }
+
+    account.parentEmail = email;
+    account.cloudApiUrl = apiUrl;
+    saveState();
+
+    if (apiUrl) {
+      statusEl.textContent = '⏳ Connecting to Cloudflare D1 Worker...';
+      try {
+        const base = apiUrl.replace(/\/$/, '');
+        let res = await fetch(`${base}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        if (res.status === 401) {
+          const activeProf = getActiveProfile();
+          res = await fetch(`${base}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email,
+              password,
+              parentName: email.split('@')[0],
+              childName: activeProf.childName,
+              childAvatar: activeProf.avatar,
+              initialState: activeProf.state
+            })
+          });
+        }
+        const data = await res.json();
+        if (data.ok && data.parent) {
+          account.parentId = data.parent.id;
+          if (Array.isArray(data.children) && data.children.length > 0) {
+            account.profiles = data.children.map((c) => ({
+              id: c.id,
+              childName: c.childName,
+              avatar: c.avatar || '🦁',
+              state: normalizeChildState(c.state)
+            }));
+            account.activeProfileId = account.profiles[0].id;
+            state = account.profiles[0].state;
+          }
+          saveState();
+          updateHeaderAndPetUI();
+          renderAccountModal();
+          statusEl.textContent = `✅ Synced with Cloudflare D1 (${email})!`;
+          playSoundFX('fanfare');
+          return;
+        }
+      } catch {
+        statusEl.textContent = `✅ Saved locally for ${email} (Cloudflare endpoint offline).`;
+        return;
+      }
+    }
+
+    statusEl.textContent = `✅ Account (${email}) saved & active!`;
+    playSoundFX('correct');
+  });
+
+  // Instant Transfer Code (Export / Import)
+  document.getElementById('exportSyncCodeBtn').addEventListener('click', () => {
+    saveState();
+    const code = btoa(encodeURIComponent(JSON.stringify(account)));
+    const input = document.getElementById('syncCodeInput');
+    input.value = code;
+    input.select();
+    navigator.clipboard?.writeText(code);
+    document.getElementById('cloudStatusMsg').textContent = '📋 Transfer Code copied to clipboard!';
+  });
+
+  document.getElementById('importSyncCodeBtn').addEventListener('click', () => {
+    const code = document.getElementById('syncCodeInput').value.trim();
+    if (!code) return;
+    try {
+      const parsed = JSON.parse(decodeURIComponent(atob(code)));
+      if (Array.isArray(parsed.profiles) && parsed.profiles.length > 0) {
+        account = parsed;
+        state = getActiveProfile().state;
+        saveState();
+        updateHeaderAndPetUI();
+        renderAccountModal();
+        renderParentAnalyticsDashboard();
+        loadQuestion();
+        playSoundFX('fanfare');
+        document.getElementById('cloudStatusMsg').textContent = '🎉 Profiles & analytics restored!';
+      }
+    } catch {
+      alert('Invalid Transfer Code. Please copy the full code and try again.');
+    }
+  });
 
   // 15-Minute Habit Session Timer
   setInterval(() => {
