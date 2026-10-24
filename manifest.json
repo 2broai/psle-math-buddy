@@ -1,0 +1,18 @@
+{
+  "name": "Merli Math Buddy — Singapore P1 to PSLE Math",
+  "short_name": "Merli Math",
+  "description": "Interactive Singapore MOE Primary 1 Mathematics & PSLE Foundation for 6-year-olds",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eef6ff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%232563eb'/><text x='50' y='68' font-size='60' text-anchor='middle'>🦁</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Merli Math" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>Merli Math Buddy — Singapore MOE P1 to PSLE Interactive Math</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%232563eb'/><text x='50' y='68' font-size='60' text-anchor='middle'>🦁</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Top Navigation & Mode Switcher -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">🦁</div>
+        <div>
+          <h1 class="brand-title">Merli Math Buddy <span class="badge-sg">SG MOE P1 → PSLE</span></h1>
+          <p class="brand-subtitle">Interactive Singapore Math Adventure &amp; Infinite Question Engine</p>
+        </div>
+      </div>
+
+      <!-- Mode Switcher: Kid Zone vs Parent Corner -->
+      <nav class="mode-nav" aria-label="App Mode">
+        <button type="button" class="mode-btn active" id="tabKidBtn" data-mode="kid" aria-current="page">
+          <span class="mode-icon">🗺️</span>
+          <span>Kid's Adventure</span>
+        </button>
+        <button type="button" class="mode-btn" id="tabDadBtn" data-mode="dad">
+          <span class="mode-icon">🧭</span>
+          <span>Parent's PSLE Corner</span>
+        </button>
+      </nav>
+
+      <!-- Quick Stats & Reward Buttons -->
+      <div class="stats-bar" aria-label="Student Progress">
+        <div class="stat-pill star-pill" title="Stars Earned">
+          <span>⭐</span>
+          <strong id="starCount">25</strong>
+        </div>
+        <div class="stat-pill streak-pill" title="Total Questions Solved">
+          <span>🏆</span>
+          <strong id="solvedCount">0</strong>
+          <span class="stat-unit">solved</span>
+        </div>
+        <button type="button" class="sticker-btn" id="openStickerBookBtn" title="Open Singapore Sticker Book">
+          📖 Stickers (<span id="stickerCountLabel">0/15</span>)
+        </button>
+        <button type="button" class="shop-btn" id="openPetShopBtn" title="Open Merli's Reward Shop">
+          🎁 Shop
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- ==================== VIEW 1: KID'S ADVENTURE ZONE ==================== -->
+    <section id="kidView" class="view-section active" aria-labelledby="kidViewHeading">
+      <h2 id="kidViewHeading" class="sr-only">Primary 1 Singapore Math Interactive Adventure</h2>
+
+      <!-- SINGAPORE ADVENTURE MAP (5 MOE P1 WORLDS) -->
+      <div class="adventure-map-bar card" aria-label="Singapore Math Adventure Map">
+        <div class="map-header-row">
+          <div>
+            <span class="map-tag">🗺️ SINGAPORE P1 ADVENTURE MAP</span>
+            <h3 class="map-title">Choose an Island World to Explore! <small>(Every 3 correct answers unlocks a new Sticker 🌟)</small></h3>
+          </div>
+          <div class="map-controls">
+            <button type="button" class="btn-outline-sm" id="toggleSoundBtn" title="Toggle Sound Effects">
+              🔔 Sound FX: ON
+            </button>
+          </div>
+        </div>
+
+        <div class="island-tabs" role="tablist" aria-label="5 Singapore Math Worlds">
+          <button type="button" class="island-tab active" data-topic="bonds" role="tab" aria-selected="true">
+            <span class="island-icon">🌊</span>
+            <div class="island-info">
+              <strong>1. Merlion Bay</strong>
+              <small>Number Bonds &amp; Make 10</small>
+              <span class="island-progress" id="prog-bonds">0 solved</span>
+            </div>
+          </button>
+
+          <button type="button" class="island-tab" data-topic="barmodel" role="tab" aria-selected="false">
+            <span class="island-icon">🎡</span>
+            <div class="island-info">
+              <strong>2. Marina Flyer</strong>
+              <small>Bar Models (Part &amp; Compare)</small>
+              <span class="island-progress" id="prog-barmodel">0 solved</span>
+            </div>
+          </button>
+
+          <button type="button" class="island-tab" data-topic="wordprob" role="tab" aria-selected="false">
+            <span class="island-icon">🌳</span>
+            <div class="island-info">
+              <strong>3. Gardens by the Bay</strong>
+              <small>50+ Visual Word Problems</small>
+              <span class="island-progress" id="prog-wordprob">0 solved</span>
+            </div>
+          </button>
+
+          <button type="button" class="island-tab" data-topic="patterns" role="tab" aria-selected="false">
+            <span class="island-icon">🦖</span>
+            <div class="island-info">
+              <strong>4. Sentosa Island</strong>
+              <small>Patterns, Shapes &amp; Ordinals</small>
+              <span class="island-progress" id="prog-patterns">0 solved</span>
+            </div>
+          </button>
+
+          <button type="button" class="island-tab" data-topic="moneytime" role="tab" aria-selected="false">
+            <span class="island-icon">✈️</span>
+            <div class="island-info">
+              <strong>5. Jewel Changi</strong>
+              <small>SG Money, Time &amp; Graphs</small>
+              <span class="island-progress" id="prog-moneytime">0 solved</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="kid-layout">
+        <!-- Left Sidebar: Merli Virtual Pet + 15-Min Daily Quest -->
+        <aside class="pet-sidebar">
+          <!-- Virtual Pet Card -->
+          <div class="card pet-card">
+            <div class="pet-header">
+              <span class="pet-level-badge" id="petLevelBadge">Level 1 • P1 Rookie</span>
+              <button type="button" class="pet-shop-mini-btn" id="openPetShopMiniBtn">Dress Up ✨</button>
+            </div>
+
+            <div class="pet-stage" id="petAvatarArea">
+              <div class="pet-bubble" id="petSpeechBubble">
+                "Hi friend! Pick an island and let's collect Singapore stickers together!"
+              </div>
+              <div class="pet-character" id="petCharacter" role="img" aria-label="Merli the Merlion Mascot">
+                <span class="pet-Accessory-hat" id="petHatDisplay"></span>
+                <span class="pet-body" id="petBodyEmoji">🦁</span>
+                <span class="pet-Accessory-item" id="petItemDisplay"></span>
+              </div>
+              <div class="pet-name-row">
+                <h3 class="pet-name">Merli the Merlion</h3>
+                <span class="pet-mood" id="petMoodText">😊 Excited</span>
+              </div>
+            </div>
+
+            <!-- XP Progress -->
+            <div class="xp-wrapper">
+              <div class="xp-labels">
+                <span>Experience (XP)</span>
+                <span id="xpText">20 / 100 XP</span>
+              </div>
+              <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20" id="xpProgressBar">
+                <div class="progress-fill xp-fill" id="xpFill" style="width: 20%"></div>
+              </div>
+            </div>
+
+            <div class="pet-quick-actions">
+              <button type="button" class="btn-feed" id="quickFeedBtn">
+                🥪 Feed Kaya Toast (<span class="cost">5 ⭐</span>)
+              </button>
+              <button type="button" class="btn-cheer" id="petTalkBtn">
+                🔊 Merli Pep Talk
+              </button>
+            </div>
+          </div>
+
+          <!-- Daily 15-Min Quest Card -->
+          <div class="card quest-card">
+            <div class="quest-title-row">
+              <h3>🎯 Daily Quest (10–15 mins)</h3>
+              <span class="timer-pill" id="sessionTimer" title="Today's Practice Time">⏱️ 00:00</span>
+            </div>
+            <p class="quest-desc">Solve 5 questions to win today's Bonus Chest (+15 ⭐)! Then keep playing endless mode!</p>
+
+            <div class="daily-dots" id="dailyDotsContainer" aria-label="Daily 5-question progress">
+              <span class="quest-dot" data-idx="0">1</span>
+              <span class="quest-dot" data-idx="1">2</span>
+              <span class="quest-dot" data-idx="2">3</span>
+              <span class="quest-dot" data-idx="3">4</span>
+              <span class="quest-dot" data-idx="4">5</span>
+            </div>
+
+            <div class="difficulty-selector">
+              <label for="difficultySelect">P1 Difficulty Level:</label>
+              <select id="difficultySelect">
+                <option value="starter">🌱 Starter: K2 → P1 Term 1 (Gentle)</option>
+                <option value="core">🚀 Core: P1 Term 2–3 (Make 10 &amp; Within 20)</option>
+                <option value="challenge">🏆 Challenge: Thinking Cap (PSLE Seeds)</option>
+              </select>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main Interactive Math Stage -->
+        <div class="math-stage-container">
+          <!-- Active Question Card -->
+          <div class="card question-card">
+            <div class="question-top-bar">
+              <div class="question-badges">
+                <span class="tag-moe" id="questionTopicBadge">MOE P1 • Merlion Bay</span>
+                <span class="tag-cpa" id="questionSubskillBadge">Skill: Number Bonds to 10</span>
+              </div>
+
+              <div class="question-top-actions">
+                <button type="button" class="btn-outline-sm" id="speakQuestionBtn" title="Read the question aloud">
+                  🔊 Read Aloud
+                </button>
+                <button type="button" class="btn-outline-sm" id="toggleHintBtn" title="Show or hide a step-by-step thinking hint">
+                  🔍 Thinking Hint
+                </button>
+                <button type="button" class="btn-outline-sm" id="skipQuestionBtn" title="Generate a brand new question">
+                  🎲 New Question
+                </button>
+                <button type="button" class="btn-dad-tip" id="openDadTipBtn">
+                  💡 Parent Guide
+                </button>
+              </div>
+            </div>
+
+            <!-- Question Prompt + Optional CPA Thinking Hint -->
+            <div class="question-prompt-box">
+              <h3 class="question-en" id="questionTextEn">Loading question...</h3>
+              <p class="question-vi" id="questionHintText" hidden>Loading hint...</p>
+            </div>
+
+            <!-- Dynamic Visual Canvas (Number Bonds / Bar Model / Visual Counters / Clocks / Coins / Patterns) -->
+            <div class="visual-workspace" id="visualWorkspace" aria-live="polite">
+              <!-- Populated dynamically by app.js -->
+            </div>
+
+            <!-- Interactive Equation / Answer Choices -->
+            <div class="answer-section">
+              <p class="answer-instruction" id="answerInstruction">Tap the correct answer below:</p>
+              <div class="choices-grid" id="choicesGrid" role="group" aria-label="Answer choices">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Feedback Banner (shown after answering) -->
+            <div class="feedback-banner" id="feedbackBanner" hidden>
+              <div class="feedback-content">
+                <span class="feedback-icon" id="feedbackIcon">🎉</span>
+                <div>
+                  <strong id="feedbackTitle">Well done!</strong>
+                  <p id="feedbackExplain">Step-by-step explanation...</p>
+                </div>
+              </div>
+              <button type="button" class="btn-next-question" id="nextQuestionBtn">
+                Next Question ➡️
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: PARENT'S PSLE STRATEGY CORNER ==================== -->
+    <section id="dadView" class="view-section" aria-labelledby="dadViewHeading" hidden>
+      <div class="dad-hero card">
+        <div>
+          <span class="badge-dad">Parent's Strategic Guide</span>
+          <h2 id="dadViewHeading">From Primary 1 to PSLE (P6): The Singapore Math Blueprint</h2>
+          <p>
+            In Singapore MOE schools, formal exams in Primary 1 and Primary 2 were removed so children can build deep conceptual understanding without exam anxiety.
+            However, the <strong>Primary 6 PSLE Mathematics</strong> exam is famous for challenging non-routine heuristics and multi-step word problems.
+            The secret to achieving <strong>AL1</strong> in P6 is mastering <strong>Number Sense, Mental Make-10, and Bar Model Drawing</strong> right from P1 in 15 fun minutes a day.
+          </p>
+        </div>
+        <div class="al-score-box">
+          <h4>PSLE Achievement Levels (AL Scoring)</h4>
+          <ul class="al-list">
+            <li><span class="al-tag al-gold">AL1</span> <strong>≥ 90 marks</strong> (Top IP / Express Target)</li>
+            <li><span class="al-tag al-silver">AL2</span> <strong>85 – 89 marks</strong> (Distinction)</li>
+            <li><span class="al-tag al-bronze">AL3</span> <strong>80 – 84 marks</strong> (Strong Mastery)</li>
+            <li><span class="al-tag">AL4–8</span> <strong>&lt; 80 marks</strong> (Standard Progression)</li>
+          </ul>
+          <small>Total PSLE score across 4 subjects (English, Math, Science, Mother Tongue) ranges from <strong>4 (best) to 32</strong>.</small>
+        </div>
+      </div>
+
+      <div class="dad-grid">
+        <!-- Left Column: Exclusive Accordion Roadmap P1 -> P6 -->
+        <div class="card dad-roadmap-card">
+          <h3>🗺️ 6-Year P1 → P6 Mastery Roadmap (Click each stage)</h3>
+          <p class="section-sub">Built with native searchable disclosures — use Find-in-Page (Ctrl+F / Cmd+F) to jump to any concept.</p>
+
+          <div class="roadmap-accordion">
+            <details class="roadmap-item" name="psle-roadmap" open>
+              <summary class="roadmap-summary">
+                <span class="phase-pill phase-1">Stage 1: K2 → Primary 1 &amp; 2</span>
+                <strong>CPA Foundation, Number Bonds &amp; Intro Bar Models (Current Stage)</strong>
+              </summary>
+              <div class="roadmap-body">
+                <p><strong>Core Goal:</strong> Build automaticity without finger-counting and learn to visualize word problems using diagrams.</p>
+                <ul>
+                  <li><strong>1. Number Bonds &amp; Make-10 Strategy:</strong> Instead of counting on fingers for <code>8 + 5</code>, students split <code>5</code> into <code>2</code> and <code>3</code> to make <code>8 + 2 = 10</code>, then <code>10 + 3 = 13</code>. This is the speed engine for PSLE Paper 1 (no calculator allowed).</li>
+                  <li><strong>2. Early Bar Modeling (Part-Whole &amp; Comparison):</strong> Primary students do not use algebraic $x$ and $y$ equations. They translate story sums into rectangular bars to see whether to add or subtract.</li>
+                  <li><strong>3. Patterns, Ordinals, Money &amp; Time:</strong> P1 also introduces ordinal positions (<em>3rd from the left</em>), number patterns, Singapore currency (<em>cents &amp; dollars</em>), and picture graphs.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="roadmap-item" name="psle-roadmap">
+              <summary class="roadmap-summary">
+                <span class="phase-pill phase-2">Stage 2: Primary 3 &amp; 4</span>
+                <strong>Multi-Step Bar Models, 12 Heuristics &amp; Introduction of Science</strong>
+              </summary>
+              <div class="roadmap-body">
+                <p><strong>Key Milestone:</strong> Weighted Assessments (WA) begin, Science is introduced as a core subject, and problems shift from 1-step to 2–3 steps.</p>
+                <ul>
+                  <li><strong>Unitary Method ("Units"):</strong> Bar models evolve into equal units (e.g., <em>"Ali has 3 times as many stamps as Ben"</em> → 3 units vs 1 unit).</li>
+                  <li><strong>Core Problem-Solving Heuristics:</strong> <em>Guess and Check (Assumption Method)</em>, <em>Working Backwards</em>, <em>Before-and-After Concept</em>, and <em>Looking for Patterns</em>.</li>
+                  <li><strong>Parent Tip:</strong> Children who already draw neat Part-Whole and Comparison bars in P1–P2 transition effortlessly into P3–P4 unitary models.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="roadmap-item" name="psle-roadmap">
+              <summary class="roadmap-summary">
+                <span class="phase-pill phase-2">Stage 3: Primary 5 &amp; 6 (PSLE)</span>
+                <strong>Fractions/Ratio/Percentage Integration &amp; Paper 2 Heuristics</strong>
+              </summary>
+              <div class="roadmap-body">
+                <p><strong>Why P5 is the biggest jump:</strong> Students transition to the full PSLE exam format — <strong>Paper 1 (45%, No Calculator, speed &amp; accuracy)</strong> and <strong>Paper 2 (55%, Calculator allowed, deep heuristics)</strong>.</p>
+                <ul>
+                  <li><strong>Direct Connection to P1:</strong> A 5-mark PSLE Paper 2 question combining Fractions, Ratio, and Percentage still relies on the exact same <strong>Part-Whole and Comparison Bar Models</strong> practiced in Primary 1!</li>
+                  <li><strong>Securing AL1:</strong> Zero careless mistakes in Paper 1 (powered by P1 number bonds) + clear model drawing &amp; equation steps to earn full Method Marks in Paper 2.</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <!-- Right Column: CPA Method Guide + P1 Math Keywords -->
+        <div class="dad-side-column">
+          <div class="card cpa-guide-card">
+            <h3>📱 How to Install as an iPad App (Add to Home Screen)</h3>
+            <div class="cpa-steps">
+              <div class="cpa-step">
+                <span class="cpa-badge">1</span>
+                <div>
+                  <strong>Open in Safari on iPad</strong>
+                  <p>Visit your GitHub Pages link on your iPad's Safari browser.</p>
+                </div>
+              </div>
+              <div class="cpa-step">
+                <span class="cpa-badge">2</span>
+                <div>
+                  <strong>Tap Share → "Add to Home Screen"</strong>
+                  <p>Tap the Share icon at the top of Safari and choose <strong>Add to Home Screen</strong>. Merli Math Buddy will appear as a full-screen icon on your iPad!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- P1 Math Vocabulary with Audio -->
+          <div class="card vocab-card">
+            <div class="vocab-header">
+              <h3>🗣️ Essential P1 Math Keywords (Click to Hear)</h3>
+              <span class="vocab-hint">🔊 Audio Pronunciation</span>
+            </div>
+            <div class="vocab-grid" id="vocabGrid">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== MODAL 1: PARENT COACHING GUIDE (LIGHT DISMISS) ==================== -->
+  <dialog id="dadTipDialog" closedby="any" aria-labelledby="dadTipDialogTitle" class="custom-dialog">
+    <div class="dialog-inner">
+      <div class="dialog-header">
+        <span class="badge-dad">💡 MOE Parent Coaching Guide</span>
+        <h3 id="dadTipDialogTitle">How to Guide Your Child on This Question</h3>
+      </div>
+
+      <div class="dialog-body">
+        <div class="tip-block">
+          <h4>1. Guiding Questions to Ask (Instead of giving the answer):</h4>
+          <p id="dadTipHowToAsk">...</p>
+        </div>
+
+        <div class="tip-block tip-psle-link">
+          <h4>2. 🔗 How This Connects to PSLE (P6):</h4>
+          <p id="dadTipPsleConnection">...</p>
+        </div>
+
+        <div class="tip-block">
+          <h4>3. 🗣️ Exact Coaching Script to Say Aloud:</h4>
+          <div class="english-script-box">
+            <p id="dadTipEnglishScript">...</p>
+            <button type="button" class="btn-outline-sm" id="speakDadScriptBtn">🔊 Listen</button>
+          </div>
+        </div>
+      </div>
+
+      <form method="dialog" class="dialog-footer">
+        <span class="light-dismiss-hint">Tap outside this box or press Esc to close</span>
+        <button type="submit" class="btn-primary">Got it, back to practice</button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ==================== MODAL 2: MERLI PET SHOP (LIGHT DISMISS) ==================== -->
+  <dialog id="petShopDialog" closedby="any" aria-labelledby="petShopDialogTitle" class="custom-dialog">
+    <div class="dialog-inner">
+      <div class="dialog-header">
+        <span class="badge-sg">🎁 Rewards for Daily Effort</span>
+        <h3 id="petShopDialogTitle">Merli's Reward Shop</h3>
+        <p class="shop-balance">Your Stars: <strong id="shopStarBalance">25</strong> ⭐</p>
+      </div>
+
+      <div class="dialog-body">
+        <div class="shop-grid" id="shopItemsGrid">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+      <form method="dialog" class="dialog-footer">
+        <span class="light-dismiss-hint">Tap outside or press Close</span>
+        <button type="submit" class="btn-primary">Close Shop</button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ==================== MODAL 3: SINGAPORE STICKER BOOK (LIGHT DISMISS) ==================== -->
+  <dialog id="stickerDialog" closedby="any" aria-labelledby="stickerDialogTitle" class="custom-dialog dialog-wide">
+    <div class="dialog-inner">
+      <div class="dialog-header">
+        <span class="badge-sg">🌟 Collectible Album</span>
+        <h3 id="stickerDialogTitle">My Singapore Math Sticker Book</h3>
+        <p class="shop-balance">Solve 3 questions in any Island World to unlock its next sticker! Collected: <strong id="stickerModalCount">0 / 15</strong></p>
+      </div>
+
+      <div class="dialog-body">
+        <div class="sticker-grid" id="stickerBookGrid">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+      <form method="dialog" class="dialog-footer">
+        <span class="light-dismiss-hint">Tap outside or press Close</span>
+        <button type="submit" class="btn-primary">Keep Exploring</button>
+      </form>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
