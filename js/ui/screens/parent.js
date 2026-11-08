@@ -9,6 +9,7 @@ import { esc, on, toast, modal, fmtMinutes, fmtMinShort } from '../dom.js';
 import { md } from '../markup.js';
 import { sfx } from '../../core/sound.js';
 import { themePref, setThemePref } from '../../core/theme.js';
+import { installHintHTML } from '../../core/pwa.js';
 
 const TABS = [
   ['overview', '📊 Tổng quan'],
@@ -151,7 +152,7 @@ function overviewTab(child) {
     .slice(0, 5);
   const mistakes = s.mistakes.slice(-10).reverse();
   const sy = child.birthYear ? schoolYearLabel(child.birthYear) : '?';
-  return `
+  return `${installHintHTML()}
   <section class="kpis">
     ${kpi('Hôm nay', `${Math.round(t.sec / 60)} phút`, `mục tiêu ${goal} phút`)}
     ${kpi('Số câu hôm nay', t.q, `${t.m || 0} nhiệm vụ`)}
@@ -373,8 +374,9 @@ function guideTab() {
   </ul>
   <h3>🖤 Máy đọc sách e-ink (đen trắng)</h3>
   <p>Trên máy e-ink chạy Android (Boox, Bigme, Meebook…), mở trang bằng Chrome rồi chọn <b>Cài đặt → Giao diện → Đen trắng (e-ink)</b>. Mọi hình minh hoạ chuyển sang hoa văn đen trắng dễ nhìn, không có hiệu ứng chuyển động gây nháy màn hình. (Trình duyệt có sẵn của Kindle/Kobo quá cũ nên không chạy được.)</p>
-  <h3>📱 Cài như ứng dụng trên iPad</h3>
-  <p>Mở trang bằng <b>Safari</b> → nút <b>Chia sẻ</b> → <b>Thêm vào MH chính</b> (Add to Home Screen). App chạy toàn màn hình và vẫn dùng được khi mất mạng (tiến độ tự đồng bộ khi có mạng lại).</p>
+  <h3>📱 Cài như ứng dụng (iPad, điện thoại, máy tính)</h3>
+  ${installHintHTML({ force: true })}
+  <p class="small">App chạy toàn màn hình, mở nhanh từ màn hình chính và vẫn dùng được khi mất mạng; tiến độ tự đồng bộ lên đám mây khi có mạng lại. Mỗi lần có bản mới, app tự cập nhật khi bé quay lại màn hình chính (không làm gián đoạn bài đang làm).</p>
   </div>`;
 }
 

@@ -1,16 +1,26 @@
 {
+  "id": "./",
   "name": "Merli Maths — Singapore Maths K2 to P3",
   "short_name": "Merli Maths",
   "description": "Singapore MOE maths practice for K2 to Primary 3 with endless adaptive questions and a parent dashboard.",
+  "lang": "en",
   "start_url": "./index.html#/",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
   "background_color": "#f1f6ff",
   "theme_color": "#2563eb",
+  "categories": ["education", "kids"],
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Today's Mission", "short_name": "Mission", "url": "./index.html#/play/mission", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Speed Sprint", "short_name": "Sprint", "url": "./index.html#/sprint", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Phụ huynh", "short_name": "Parents", "url": "./index.html#/parent", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
   ]
 }

@@ -3,6 +3,7 @@ import { store } from './core/store.js';
 import { syncNow, scheduleSync, flushOnHide } from './core/sync.js';
 import { setSoundEnabled } from './core/sound.js';
 import { applyTheme } from './core/theme.js';
+import { initPWA, reloadIfPending, bindInstallHints } from './core/pwa.js';
 import * as who from './ui/screens/who.js';
 import * as home from './ui/screens/home.js';
 import * as map from './ui/screens/map.js';
@@ -21,6 +22,7 @@ function route() {
   let [name, ...args] = parts;
   if (!ROUTES[name]) name = store.active() ? 'home' : 'who';
   if (KID_ONLY.has(name) && !store.active()) name = 'who';
+  if (reloadIfPending(name)) return;
   try {
     current?.unmount?.();
   } catch (e) {
@@ -65,9 +67,11 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('online', () => scheduleSync(1000));
 
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
-}
+// Installable app: service worker, auto-update, install button / iPad instructions.
+initPWA(() => {
+  if (['who', 'parent'].includes(document.body.dataset.screen)) route();
+});
+bindInstallHints(root, route);
 
 applyTheme();
 route();

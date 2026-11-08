@@ -607,3 +607,12 @@ body[data-screen='play'], body[data-screen='sprint'] { overflow: hidden; }
 [data-theme='ink'] .wt-bar { background: #fff; border: 2px solid #000; }
 [data-theme='ink'] .wt-bar i { background: #000; }
 @media (max-width: 520px) { .world-grid { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; } .world-tile { min-height: 128px; padding: 0.8rem; } }
+/* install-as-app hint */
+.install-hint { position: relative; display: flex; gap: 0.9rem; align-items: flex-start; background: #fff; border: 2px solid #bfdbfe; border-radius: 20px; padding: 1rem 1.1rem; margin: 1rem auto; max-width: 720px; box-shadow: var(--shadow); text-align: left; }
+.install-hint.ok { border-color: #bbf7d0; background: #f0fdf4; display: block; }
+.install-hint .ih-icon { font-size: 2.2rem; line-height: 1; }
+.install-hint p, .install-hint ol { margin: 0.3rem 0 0.5rem; }
+.install-hint ol { padding-left: 1.2rem; }
+.install-hint .ih-close { position: absolute; top: 0.4rem; right: 0.5rem; width: 36px; height: 36px; border: 0; background: transparent; font-size: 1.1rem; cursor: pointer; color: var(--muted); }
+.ios-share { display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border: 2px solid currentColor; border-radius: 6px; font-size: 0.8em; vertical-align: middle; }
+[data-theme='ink'] .install-hint { border-color: #000; }

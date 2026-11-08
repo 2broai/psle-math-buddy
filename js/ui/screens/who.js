@@ -5,6 +5,7 @@ import { AVATARS, syncBadge } from '../parts.js';
 import { on, esc, toast } from '../dom.js';
 import { sfx } from '../../core/sound.js';
 import { scheduleSync } from '../../core/sync.js';
+import { installHintHTML } from '../../core/pwa.js';
 
 function addForm() {
   const year = new Date().getFullYear();
@@ -32,6 +33,7 @@ export function mount(root) {
         <p class="lead">Singapore Maths practice from K2 to Primary 3 — thousands of fresh questions every day!</p>
         <p class="muted">Luyện toán theo chương trình MOE Singapore · câu hỏi sinh tự động không bao giờ hết · tự điều chỉnh theo trình độ của bé</p>
       </div>
+      ${installHintHTML()}
       ${addForm()}
       <p class="center small">Đã có tài khoản phụ huynh? <a href="#/parent/account">Đăng nhập để tải hồ sơ của bé</a></p>
     </main>`;
@@ -50,6 +52,7 @@ export function mount(root) {
           .join('')}
         <button type="button" class="who-card add" data-add><span class="who-av">＋</span><b>Thêm bé</b><small>Add a child</small></button>
       </div>
+      ${installHintHTML()}
       <div class="who-foot"><a class="btn ghost" href="#/parent">👪 Khu vực phụ huynh</a><div>${syncBadge()}</div></div>
       <div class="add-slot"></div>
     </main>`;
