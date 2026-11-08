@@ -1,6 +1,6 @@
 // Service worker: network-first for the app's own files (always fresh when online),
 // cached copies when offline. The API is never cached.
-const VERSION = 'merli-v4.0.1';
+const VERSION = 'merli-v4.0.2';
 const FONT_CACHE = 'merli-fonts';
 const CORE = ['./', './index.html', './css/app.css', './js/main.js', './manifest.json', './icon.svg'];
 
