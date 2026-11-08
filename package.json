@@ -1,0 +1,11 @@
+{
+  "name": "merli-math-buddy",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Singapore MOE K2–P3 maths practice platform (static site + Cloudflare Worker/D1 backend)",
+  "scripts": {
+    "test": "node tests/validate.mjs",
+    "serve": "python3 -m http.server 8080"
+  }
+}

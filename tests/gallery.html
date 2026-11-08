@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Merli Maths — question gallery (QA)</title>
+  <link rel="stylesheet" href="../css/app.css" />
+  <style>
+    body { padding: 1rem; }
+    .gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); gap: 1rem; }
+    .gal .qcard { flex: none; display: block !important; }
+    .gal .q-visuals { min-height: 0; }
+    .gal h4 { margin: 0 0 0.3rem; font-size: 0.8rem; color: #64748b; }
+    .gal .ans { font-size: 0.8rem; color: #16a34a; margin-top: 0.4rem; }
+    .toolbar { margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="toolbar" id="bar"></div>
+  <div class="gal" id="gal"></div>
+  <script type="module">
+    import { SKILLS } from '../js/content/curriculum.js';
+    import { renderVisual, renderVisuals } from '../js/ui/visuals/index.js';
+    import { md, esc } from '../js/ui/markup.js';
+    import { makeRng, hashStr } from '../js/core/rng.js';
+    const p = new URLSearchParams(location.search);
+    const mod = p.get('module');
+    const tier = Number(p.get('tier') || 2);
+    const seed = Number(p.get('seed') || 1);
+    document.getElementById('bar').innerHTML = ['early', 'numbers', 'addsub', 'muldiv', 'fractions', 'money', 'time', 'measure', 'geometry', 'data', 'thinking']
+      .map((m) => `<a class="btn small" href="?module=${m}&tier=${tier}&seed=${seed}">${m}</a>`).join('');
+    const list = SKILLS.filter((s) => !mod || s.module === mod);
+    document.getElementById('gal').innerHTML = list.map((s) => {
+      const q = s.gen(makeRng(hashStr(s.id) + seed * 7777 + tier), tier);
+      const ch = q.input === 'choice'
+        ? `<div class="choices ${q.choices.some((c) => c.visual) ? 'vis' : ''} n${q.choices.length}">${q.choices.map((c) => `<div class="choice">${c.visual ? renderVisual(c.visual) : ''}${c.label !== undefined || !c.visual ? `<span class="c-label">${md(String(c.label ?? c.value))}</span>` : ''}</div>`).join('')}</div>`
+        : `<div class="num-display">${esc(q.unit?.pre || '')}<span>?</span>${esc(q.unit?.post || '')}</div>`;
+      return `<section class="qcard"><h4>${s.id} · t${tier}</h4><div class="q-prompt">${md(q.prompt)}</div>${q.visuals?.length ? `<div class="q-visuals">${renderVisuals(q.visuals)}</div>` : ''}${ch}<div class="ans">✔ ${esc(String(q.answer))} — ${md(q.explain)}</div></section>`;
+    }).join('');
+  </script>
+</body>
+</html>

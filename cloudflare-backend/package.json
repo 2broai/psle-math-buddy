@@ -1,0 +1,14 @@
+{
+  "name": "merli-math-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8787",
+    "deploy": "wrangler deploy",
+    "db:init:local": "wrangler d1 execute merli-math-db --local --file=./schema.sql",
+    "db:init:remote": "wrangler d1 execute merli-math-db --remote --file=./schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}
