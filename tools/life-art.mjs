@@ -22,7 +22,8 @@ const RAW = join(ROOT, 'art/life/raw');
 const OUT = join(ROOT, 'img/life');
 const REF = join(ROOT, 'art/life/ref/hero-boy.jpg');
 const MANIFEST = join(ROOT, 'js/content/life/art.js');
-const BRAIN = join(homedir(), '.gemini/antigravity-cli/brain');
+// where Antigravity saves generated images: the CLI (agy) and the desktop IDE
+const BRAINS = [join(homedir(), '.gemini/antigravity-cli/brain'), join(homedir(), '.gemini/antigravity/brain')];
 const SCRATCH = '/tmp/merli-art';
 const WORLDS = ['kind', 'feelings', 'school', 'safe', 'sos', 'road', 'healthy', 'citizen', 'online'];
 // Topics drawn only with the simple built-in scene pictures (no AI image) — sensitive subjects.
@@ -153,7 +154,7 @@ const hasImage = (id) => existsSync(join(OUT, `${id}.webp`));
 function findDrawn() {
   // newest drawn file per card id, from every agy conversation folder
   const found = new Map();
-  if (!existsSync(BRAIN)) return found;
+  for (const BRAIN of BRAINS.filter((b) => existsSync(b)))
   for (const conv of readdirSync(BRAIN)) {
     const dir = join(BRAIN, conv);
     let files;
@@ -267,6 +268,27 @@ if (cmd === 'prompts') {
   };
   await Promise.all(Array.from({ length: Math.min(jobs, batches.length) }, worker));
   importDrawn();
+} else if (cmd === 'ide-prompt') {
+  // a paste-ready request for the Antigravity IDE agent (uses the IDE's own account / image quota)
+  const missing = wanted.filter(({ sc }) => !hasImage(sc.id)).map(({ sc }) => sc.id);
+  const file = join(ROOT, 'art/life/IDE-PROMPT.md');
+  writeFileSync(
+    file,
+    `Use your image generation tool to draw the ${missing.length} pictures listed below, ONE AT A TIME (wait for each to finish).
+
+For each id:
+1. Read the prompt file ${PROMPTS}/<id>.txt and use its text as the image prompt.
+2. Pass this reference image as an input image every time, so the main character always looks the same: ${REF}
+3. Name the image exactly life_<id with "-" replaced by "_"> (for example id lost-mall → life_lost_mall).
+4. One image per id, no extra variants, no other files.
+
+If you hit a quota limit, stop and tell me how many were finished.
+
+Ids:
+${missing.join('\n')}
+`
+  );
+  console.log(`${missing.length} missing → art/life/IDE-PROMPT.md (after drawing, run: node tools/life-art.mjs import)`);
 } else if (cmd === 'sheet') {
   // contact sheets for eyeballing every picture (tests/out/art-sheet-N.jpg)
   console.log(execFileSync('python3', [join(ROOT, 'tools/art-sheet.py')]).toString().trim());

@@ -6,3 +6,4 @@ tests/out/
 .playwright-mcp/
 art/life/raw/
 art/life/*.log
+art/life/IDE-PROMPT.md
