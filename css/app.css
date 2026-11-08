@@ -616,3 +616,122 @@ body[data-screen='play'], body[data-screen='sprint'] { overflow: hidden; }
 .install-hint .ih-close { position: absolute; top: 0.4rem; right: 0.5rem; width: 36px; height: 36px; border: 0; background: transparent; font-size: 1.1rem; cursor: pointer; color: var(--muted); }
 .ios-share { display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border: 2px solid currentColor; border-radius: 6px; font-size: 0.8em; vertical-align: middle; }
 [data-theme='ink'] .install-hint { border-color: #000; }
+
+/* ------------------------------------------------------------------ Life Skills */
+.tiles { grid-auto-flow: dense; }
+.tile-big.t-life { background: linear-gradient(135deg, #15803d, #65a30d); grid-column: span 2; }
+.tile-big.wide { grid-column: span 2; }
+.lang-toggle { display: inline-flex; flex: none; border: 2px solid var(--line); border-radius: 999px; overflow: hidden; background: #fff; align-self: center; }
+.lang-toggle button { border: 0; background: transparent; padding: 0.45rem 1rem; min-height: 46px; font-family: var(--font-d); font-size: 1.05rem; color: var(--ink-2); cursor: pointer; }
+.lang-toggle button.on { background: var(--primary); color: #fff; }
+.lang-toggle.small button { padding: 0.25rem 0.75rem; min-height: 42px; font-size: 0.95rem; }
+.story-card .q-meta .lang-toggle { margin-left: auto; }
+.story-card .q-meta .read-btn { margin-left: 0; }
+.scene { font-size: clamp(2.8rem, 6vw, 4.4rem); line-height: 1.15; letter-spacing: 0.14em; text-align: center; padding: 0.45rem; margin: 0.2rem 0 0.5rem; border-radius: 22px; background: color-mix(in srgb, var(--c, var(--primary)) 9%, white); }
+.qcard.story-card .q-prompt { font-size: clamp(1.25rem, 1.5vw + 0.65rem, 1.75rem); }
+.s-choices { display: flex; flex-direction: column; gap: 0.7rem; }
+.s-opt { display: grid; grid-template-columns: 1fr auto; gap: 0.45rem; }
+.s-choice { display: flex; align-items: center; gap: 0.7rem; min-height: 78px; padding: 0.6rem 0.9rem; border-radius: 20px; border: 3px solid var(--line); background: #fff; box-shadow: 0 4px 0 #e2e8f0; color: var(--ink); font-family: var(--font-b); font-weight: 700; font-size: clamp(1.1rem, 0.9vw + 0.8rem, 1.35rem); line-height: 1.3; text-align: left; cursor: pointer; transition: transform 0.08s; }
+.s-choice:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #e2e8f0; }
+.s-choice:disabled { cursor: default; }
+.s-e { flex: none; font-size: 2rem; line-height: 1; }
+.s-t { flex: 1; }
+.s-mark { flex: none; font-size: 1.5rem; }
+.s-say { width: 54px; border-radius: 16px; border: 2px solid var(--line); background: #f8fafc; font-size: 1.3rem; cursor: pointer; }
+.s-say:active { background: var(--primary-soft); }
+.s-why { grid-column: 1 / -1; padding: 0.65rem 0.95rem; border-radius: 16px; border-left: 6px solid var(--line); background: #f8fafc; font-size: 1.08rem; line-height: 1.45; }
+.s-opt.v-best .s-choice { border-color: var(--good); background: var(--good-soft); box-shadow: 0 4px 0 #86efac; animation: pop 0.35s; }
+.s-opt.v-best .s-why { border-left-color: var(--good); background: #f0fdf4; }
+.s-opt.v-ok .s-choice { border-color: var(--warn); border-style: dashed; background: #fffbeb; box-shadow: none; }
+.s-opt.v-ok .s-why { border-left-color: var(--warn); background: #fffbeb; }
+.s-opt.v-no .s-choice { border-color: #fca5a5; background: var(--bad-soft); box-shadow: none; animation: shake 0.4s; }
+.s-opt.v-no .s-why { border-left-color: var(--bad); background: #fff5f5; }
+.s-opt.revealed .s-choice { animation: pop 0.35s; }
+.story-card.answered .s-opt:not(.v-best):not(.v-ok):not(.v-no) .s-choice { opacity: 0.5; }
+.s-opt.reading .s-choice { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-soft); }
+.fb.lesson .explain { font-size: 1.22rem; font-weight: 700; }
+.life-hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.life-hero-right { display: flex; flex-direction: column; align-items: stretch; gap: 0.6rem; flex: 1 1 300px; max-width: 460px; }
+.life-hero-right p { margin: 0; text-align: center; }
+.life-go { min-height: 120px; }
+.skill-chip.off { opacity: 0.45; }
+.learned { width: min(100%, 680px); text-align: left; background: #f8fafc; border-radius: 18px; padding: 0.8rem 1.1rem; margin: 0.4rem 0; }
+.learned h3 { margin: 0; }
+.learned ul { margin: 0.3rem 0 0; padding-left: 1.2rem; }
+.learned li { margin: 0.4rem 0; font-weight: 600; }
+@media (orientation: landscape) and (min-width: 900px) {
+  .qcard.story-card { grid-template-columns: minmax(0, 1fr) minmax(400px, 1.15fr); grid-template-rows: auto auto 1fr; grid-template-areas: 'meta meta' 'scene choices' 'prompt choices'; }
+  .qcard.story-card .scene { grid-area: scene; }
+  .qcard.story-card .q-prompt { grid-area: prompt; grid-row: auto; align-self: start; font-size: clamp(1.35rem, 1.1vw + 0.85rem, 1.9rem); }
+  .qcard.story-card .s-choices { grid-area: choices; align-self: start; }
+}
+@media (max-width: 760px) { .tile-big.t-life, .tile-big.wide { grid-column: span 2; } }
+[data-theme='ink'] .scene { background: #fff; border: 2px solid #000; }
+[data-theme='ink'] .scene, [data-theme='ink'] .s-e, [data-theme='ink'] .s-mark { filter: grayscale(1) contrast(1.15); }
+[data-theme='ink'] .lang-toggle { border-color: #000; }
+[data-theme='ink'] .lang-toggle button.on { background: #000; color: #fff; }
+[data-theme='ink'] .s-choice { border: 3px solid #000; background: #fff; color: #000; box-shadow: none; }
+[data-theme='ink'] .s-opt.v-best .s-choice { border-width: 6px; background: #fff; }
+[data-theme='ink'] .s-opt.v-ok .s-choice { border-style: dashed; background: #fff; }
+[data-theme='ink'] .s-opt.v-no .s-choice { border-style: dotted; background: #fff; }
+[data-theme='ink'] .s-why, [data-theme='ink'] .s-opt .s-why { background: #fff; border: 2px solid #000; border-left-width: 6px; }
+[data-theme='ink'] .s-opt.v-ok .s-why { border-style: dashed; }
+[data-theme='ink'] .s-opt.v-no .s-why { border-style: dotted; }
+[data-theme='ink'] .s-opt.reading .s-choice { box-shadow: 0 0 0 4px #000; }
+[data-theme='ink'] .s-say { border-color: #000; background: #fff; }
+[data-theme='ink'] .learned { background: #fff; border: 2px solid #000; }
+.skill-line > div { flex: 1; }
+.guide details { border-top: 1px solid var(--line); padding: 0.55rem 0; }
+.guide details summary { cursor: pointer; min-height: 40px; display: flex; align-items: center; gap: 0.4rem; }
+.talk-topic { padding: 0.4rem 0 0.4rem 0.8rem; border-left: 4px solid var(--line); margin: 0.5rem 0; }
+.talk-topic p, .talk-topic ul { margin: 0.25rem 0; }
+.topic-set { border: 1px solid var(--line); border-radius: 14px; padding: 0.4rem 0.8rem 0.6rem; margin: 0 0 0.6rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.1rem 0.8rem; }
+.topic-set legend { font-weight: 800; padding: 0 0.3rem; }
+[data-theme='ink'] .topic-set, [data-theme='ink'] .talk-topic { border-color: #000; }
+
+/* Life Skills situation pictures (js/ui/visuals/scene.js) */
+.scene.has-pic { padding: 0; background: none; letter-spacing: normal; font-size: 1rem; line-height: 1.2; }
+.scene-pic { position: relative; margin: 0; width: 100%; aspect-ratio: 16 / 9; max-height: 42vh; border-radius: 22px; overflow: hidden; container-type: size; background: #eaf6ff; box-shadow: inset 0 0 0 2px rgba(15, 23, 42, 0.06); }
+.sp-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sp-fig { position: absolute; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; line-height: 1; pointer-events: none; }
+.sp-e { display: block; font-size: 52px; font-size: 25cqh; line-height: 1; filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.18)); }
+.sp-fig.sz-s .sp-e { font-size: 34px; font-size: 15cqh; }
+.sp-fig.sz-l .sp-e { font-size: 70px; font-size: 34cqh; }
+.sp-fig.on-screen .sp-e { font-size: 30px; font-size: 13cqh; filter: none; }
+.sp-e.flip { transform: scaleX(-1); }
+.sp-you { margin-top: 2px; padding: 1px 9px; border-radius: 99px; background: var(--primary); color: #fff; font-family: var(--font-d); font-size: 13px; font-size: clamp(11px, 6cqh, 18px); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
+.sp-bubble { position: relative; margin-bottom: 6px; max-width: 40cqw; padding: 5px 9px; border-radius: 14px; background: #fff; border: 2px solid #334155; color: #0f172a; font-family: var(--font-b); font-weight: 800; font-size: 13px; font-size: clamp(11px, 6.4cqh, 19px); line-height: 1.2; text-align: center; white-space: normal; width: max-content; }
+.sp-bubble.say::after { content: ''; position: absolute; left: 50%; bottom: -8px; width: 10px; height: 10px; background: #fff; border-right: 2px solid #334155; border-bottom: 2px solid #334155; transform: translateX(-50%) rotate(45deg); }
+.sp-bubble.think { border-style: dashed; border-radius: 20px; font-size: 22px; font-size: clamp(16px, 11cqh, 30px); padding: 2px 10px; }
+.sp-bubble.think::after { content: ''; position: absolute; left: 50%; bottom: -10px; width: 7px; height: 7px; border-radius: 50%; background: #fff; border: 2px solid #334155; }
+.sp-fig.on-screen .sp-bubble { max-width: 34cqw; font-size: clamp(10px, 5.4cqh, 16px); }
+.sp-prop { position: absolute; transform: translate(-50%, -50%); font-size: 26px; font-size: 12cqh; line-height: 1; pointer-events: none; }
+.sp-prop.sz-m { font-size: 38px; font-size: 18cqh; }
+.sp-prop.sz-l { font-size: 52px; font-size: 25cqh; }
+@media (orientation: portrait) { .scene-pic { max-height: 34vh; } }
+[data-theme='ink'] .scene.has-pic { border: 0; }
+[data-theme='ink'] .scene-pic { box-shadow: inset 0 0 0 2px #000; }
+[data-theme='ink'] .sp-bg { filter: grayscale(1) contrast(0.85) brightness(1.08); }
+[data-theme='ink'] .sp-e, [data-theme='ink'] .sp-prop { filter: grayscale(1) contrast(1.2); }
+[data-theme='ink'] .sp-you { background: #000; }
+[data-theme='ink'] .sp-bubble, [data-theme='ink'] .sp-bubble::after { border-color: #000; }
+
+/* drawn Life Skills pictures (img/life) with speech bubbles on top */
+.scene.has-art .scene-pic, .scene.has-art > .scene-emoji { display: none; }
+.scene.has-art.art-failed .scene-art { display: none; }
+.scene.has-art.art-failed .scene-pic { display: block; }
+.scene-art { position: relative; margin: 0; width: 100%; aspect-ratio: 16 / 9; max-height: 46vh; border-radius: 22px; overflow: hidden; background: #f3efe6; box-shadow: inset 0 0 0 2px rgba(15, 23, 42, 0.06); }
+.scene-art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sa-col { position: absolute; top: 3%; display: flex; flex-direction: column; gap: 6px; max-width: 46%; }
+.sa-col.left { left: 3%; align-items: flex-start; }
+.sa-col.right { right: 3%; align-items: flex-end; }
+.sa-bubble { position: relative; padding: 6px 12px; border-radius: 16px; background: rgba(255, 255, 255, 0.96); border: 2px solid #334155; font-weight: 800; font-size: clamp(0.85rem, 1.4vw + 0.3rem, 1.15rem); line-height: 1.25; color: #0f172a; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); }
+.sa-who { font-size: 1.15em; }
+@media (orientation: portrait) { .scene-art { max-height: 36vh; } }
+[data-theme='ink'] .scene-art img { filter: grayscale(1) contrast(1.05); }
+[data-theme='ink'] .sa-bubble { border-color: #000; background: #fff; }
+.hero-intro { display: flex; align-items: center; gap: 0.8rem; }
+.hero-intro img { width: 132px; height: auto; border-radius: 16px; background: #fffaf0; }
+.scene-emoji { font-size: clamp(2.8rem, 6vw, 4.4rem); line-height: 1.15; letter-spacing: 0.14em; text-align: center; padding: 0.45rem; }
+.hero-intro p { margin: 0; font-size: 1.02rem; }
+.hero-intro img { width: 92px; }

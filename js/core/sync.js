@@ -85,6 +85,17 @@ export function mergeChild(local, server) {
     .filter((m) => (seen.has(m.id) ? false : seen.add(m.id)))
     .sort((a, b) => a.ts - b.ts)
     .slice(-150);
+  // Life Skills: the card record with more answers wins; logs are unioned
+  out.life = { seen: { ...L.life.seen }, log: [] };
+  for (const [id, sv] of Object.entries(S.life.seen)) {
+    const lv = out.life.seen[id];
+    if (!lv || (sv.n || 0) > (lv.n || 0) || ((sv.n || 0) === (lv.n || 0) && (sv.last || 0) > (lv.last || 0))) out.life.seen[id] = sv;
+  }
+  const seenLog = new Set();
+  out.life.log = [...L.life.log, ...S.life.log]
+    .filter((m) => (seenLog.has(m.id) ? false : seenLog.add(m.id)))
+    .sort((a, b) => a.ts - b.ts)
+    .slice(-60);
   out.streak = (S.streak.last || '') > (L.streak.last || '') ? { ...S.streak } : { ...L.streak };
   out.streak.best = Math.max(L.streak.best || 0, S.streak.best || 0);
   // settings & profile: newest change wins

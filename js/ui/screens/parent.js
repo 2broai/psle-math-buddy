@@ -5,15 +5,21 @@ import { LEVELS, STRANDS, UNITS, schoolYearLabel, schoolLevelForBirthYear } from
 import { statOf, starsOf, accuracy, frontierSkills, todayStats, TROPHIES } from '../../core/progress.js';
 import { signIn, signUp, signOut, syncNow, changePassword, fetchDay, deleteChildRemote, syncStatus, onSyncStatus } from '../../core/sync.js';
 import { parentGate, starsHTML, AVATARS, syncBadge } from '../parts.js';
-import { esc, on, toast, modal, fmtMinutes, fmtMinShort } from '../dom.js';
+import { esc, on, toast, modal, fmtMinutes, fmtMinShort, resetListeners } from '../dom.js';
 import { md } from '../markup.js';
 import { sfx } from '../../core/sound.js';
 import { themePref, setThemePref } from '../../core/theme.js';
 import { installHintHTML } from '../../core/pwa.js';
+import { lifePrefs, worldProgress, LIFE_WORLDS, LIFE_TOPICS, SCENARIO_MAP, getLifeTopic } from '../../core/life.js';
+import { buildCard } from '../../content/life/card.js';
+import { REGIONS } from '../../content/life/meta.js';
+
+const skillVi = (id) => getSkill(id)?.vi || getLifeTopic(id)?.vi || id;
 
 const TABS = [
   ['overview', '📊 Tổng quan'],
   ['skills', '🎯 Kỹ năng'],
+  ['life', '🌱 Kỹ năng sống'],
   ['history', '🗓️ Lịch sử'],
   ['settings', '⚙️ Cài đặt'],
   ['account', '☁️ Tài khoản'],
@@ -46,11 +52,13 @@ export async function mount(root, [tab = 'overview', arg]) {
 }
 
 function render(root, tab, arg) {
+  resetListeners(root);
   const child = store.active() || store.children[0] || null;
   if (child && !store.active()) store.setActive(child.id);
   const kids = store.children;
   const content =
     tab === 'skills' ? skillsTab(child, arg)
+    : tab === 'life' ? lifeTab(child)
     : tab === 'history' ? historyTab(child)
     : tab === 'settings' ? settingsTab(child)
     : tab === 'account' ? accountTab()
@@ -183,7 +191,7 @@ function overviewTab(child) {
       ${
         mistakes.length
           ? `<ul class="mistakes">${mistakes
-              .map((m) => `<li><small>${new Date(m.ts).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(getSkill(m.skill)?.vi || m.skill)}</small><div>${esc(m.q)}</div><div>${m.fixed ? `Lần đầu bé trả lời <b class="bad">${esc(m.given)}</b>, sau đó tự sửa đúng <b class="good">${esc(m.answer)}</b> 👍` : `Bé trả lời <b class="bad">${esc(m.given)}</b> → đúng là <b class="good">${esc(m.answer)}</b>`}</div></li>`)
+              .map((m) => `<li><small>${new Date(m.ts).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(skillVi(m.skill))}</small><div>${esc(m.q)}</div><div>${m.fixed ? `Lần đầu bé trả lời <b class="bad">${esc(m.given)}</b>, sau đó tự sửa đúng <b class="good">${esc(m.answer)}</b> 👍` : `Bé trả lời <b class="bad">${esc(m.given)}</b> → đúng là <b class="good">${esc(m.answer)}</b>`}</div></li>`)
               .join('')}</ul><a class="btn" href="#/play/review">🔁 Cho bé luyện lại các lỗi sai</a>`
           : '<p class="muted">Chưa có lỗi sai nào.</p>'
       }
@@ -338,6 +346,88 @@ function accountTab() {
     <li>Hoàn toàn miễn phí (GitHub Pages + Cloudflare). Mật khẩu được mã hoá (PBKDF2), không lưu dạng gốc.</li></ul></div>${backup}`;
 }
 
+// ------------------------------------------------------------------ life skills
+function lifeTab(child) {
+  if (!child) return `<div class="card"><p>Chưa có hồ sơ. <a href="#/who">Tạo hồ sơ cho bé</a></p></div>`;
+  const prefs = lifePrefs(child);
+  const L = child.state.life;
+  const seenIds = Object.keys(L.seen).filter((id) => SCENARIO_MAP.has(id));
+  const total = [...SCENARIO_MAP.values()].filter((sc) => !sc.region || sc.region === prefs.region).length;
+  const firstTry = seenIds.filter((id) => (L.seen[id].ok || 0) > 0).length;
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const today = seenIds.filter((id) => (L.seen[id].last || 0) >= start.getTime()).length;
+  const log = L.log.filter((e) => SCENARIO_MAP.has(e.card)).slice(-12).reverse();
+  const numbers = (r) => `${REGIONS[r].vi}: cảnh sát ${REGIONS[r].POLICE}, cứu hoả ${REGIONS[r].FIRE}, cấp cứu ${REGIONS[r].AMBULANCE}`;
+
+  const worlds = LIFE_WORLDS.map((w) => {
+    const p = worldProgress(child, w.id);
+    if (!p.total) return '';
+    const pct = Math.round((p.seen / p.total) * 100);
+    return `<div class="skill-line"><div><b>${w.icon} ${esc(w.vi)}</b> <span class="muted small">${esc(w.blurbVi)}</span>
+      <div class="meter"><i style="width:${pct}%"></i></div>
+      <div class="small muted">${p.seen}/${p.total} câu chuyện · đúng ngay lần đầu ${p.seen ? Math.round((p.firstTry / p.seen) * 100) : 0}% · ${p.stars}★</div></div></div>`;
+  }).join('');
+
+  const talkItems = log.map((e) => {
+    const sc = SCENARIO_MAP.get(e.card);
+    const card = buildCard(sc, { lang: 'vi', region: prefs.region, names: e.names });
+    const first = card.choices.find((c) => c.src === e.first);
+    const best = card.choices[card.best];
+    const tp = getLifeTopic(sc.topic);
+    return `<li><small>${new Date(e.ts).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })} · ${tp.icon} ${esc(tp.vi)}</small>
+      <div>${esc(card.prompt)}</div>
+      <div>Bé chọn: <b class="bad">${first?.v === 'ok' ? '🙂' : '✋'} ${esc(first?.text || '?')}</b>${e.solved ? ' → sau đó tự tìm ra cách tốt nhất 👍' : ''}</div>
+      <div>Cách tốt nhất: <b class="good">✅ ${esc(best.text)}</b></div>
+      <div class="small">💡 ${esc(card.lesson)}</div>
+      <div class="small muted">Hỏi con: “${esc(tp.talk[0])}”</div></li>`;
+  }).join('');
+
+  const guideByWorld = LIFE_WORLDS.map((w) => {
+    const topics = LIFE_TOPICS.filter((t) => t.world === w.id);
+    if (!topics.length) return '';
+    return `<details><summary><b>${w.icon} ${esc(w.vi)}</b> <span class="muted small">(${topics.length} chủ đề)</span></summary>${topics
+      .map((t) => `<div class="talk-topic"><b>${t.icon} ${esc(t.vi)}</b><p class="small">🎯 ${esc(t.goal)}</p><ul class="small">${t.talk.map((q) => `<li>${esc(q)}</li>`).join('')}</ul></div>`)
+      .join('')}</details>`;
+  }).join('');
+
+  const topicChecks = LIFE_WORLDS.map((w) => {
+    const topics = LIFE_TOPICS.filter((t) => t.world === w.id);
+    if (!topics.length) return '';
+    return `<fieldset class="topic-set"><legend>${w.icon} ${esc(w.vi)}</legend>${topics
+      .map((t) => `<label class="check"><input type="checkbox" name="topic" value="${t.id}" ${prefs.off.has(t.id) ? '' : 'checked'}> ${t.icon} ${esc(t.vi)}</label>`)
+      .join('')}</fieldset>`;
+  }).join('');
+
+  return `<section class="kpis">
+    ${kpi('Đã khám phá', `${seenIds.length}/${total}`, 'câu chuyện')}
+    ${kpi('Chọn đúng ngay', seenIds.length ? `${Math.round((firstTry / seenIds.length) * 100)}%` : '–', 'lần đầu')}
+    ${kpi('Hôm nay', today, 'câu chuyện')}
+  </section>
+  <section class="grid2">
+    <div class="card"><h2>🌱 Tiến độ theo chủ đề lớn</h2>${worlds || '<p class="muted">Chưa có nội dung.</p>'}</div>
+    <div class="card"><h2>💬 Nên trò chuyện với con</h2>
+      <p class="small muted">Những tình huống bé chưa chọn đúng ngay lần đầu. Đây là cơ hội nói chuyện, không phải lỗi để trách — hỏi con "Vì sao con chọn vậy?" trước khi giải thích.</p>
+      ${talkItems ? `<ul class="mistakes">${talkItems}</ul>` : '<p class="muted">Chưa có — bé chọn đúng hết hoặc chưa chơi. 👍</p>'}
+    </div>
+  </section>
+  <section class="card guide"><h2>🗣️ Gợi ý câu hỏi trò chuyện theo chủ đề</h2>
+    <p class="small">Mỗi chủ đề có mục tiêu và vài câu hỏi mở để bố mẹ nói chuyện với con (lúc ăn tối, trên đường đi học…). Trẻ nhớ quy tắc an toàn tốt nhất khi được <b>tập nói ra và đóng vai</b> nhiều lần.</p>
+    ${guideByWorld}
+  </section>
+  <form class="card settings-form" data-form="life">
+    <h2>⚙️ Cài đặt Kỹ năng sống</h2>
+    <label>Ngôn ngữ mặc định của thẻ tình huống<select class="input" name="lifeLang">${opt('en', 'English (như ở trường)', prefs.lang)}${opt('vi', 'Tiếng Việt (dễ hiểu hơn cho bé nhỏ)', prefs.lang)}</select>
+      <small class="muted">Bé có thể bấm EN/VI trên từng thẻ để đổi bất cứ lúc nào.</small></label>
+    <label>Gia đình đang sống ở<select class="input" name="region">${opt('SG', numbers('SG'), prefs.region)}${opt('VN', numbers('VN'), prefs.region)}</select>
+      <small class="muted">Quyết định số điện thoại khẩn cấp bé được dạy, và một số tình huống chỉ có ở Singapore (hawker centre…) hoặc Việt Nam (xe máy…).</small></label>
+    <div class="label">Chủ đề được bật</div>
+    <p class="small muted">Tắt chủ đề nào thì chủ đề đó không xuất hiện trong "Câu chuyện hôm nay". Chủ đề <b>an toàn cơ thể</b> được viết nhẹ nhàng, đúng mực theo khuyến nghị giáo dục an toàn cho trẻ — nên để bật và cùng con trò chuyện.</p>
+    ${topicChecks}
+    <button class="btn primary">Lưu cài đặt</button>
+  </form>`;
+}
+
 // ------------------------------------------------------------------ guide
 function guideTab() {
   const counts = LEVELS.map((l) => `${l.id === 'K' ? 'K2' : l.id}: ${SKILLS.filter((k) => k.level === l.id).length}`).join(' · ');
@@ -372,6 +462,8 @@ function guideTab() {
     <li><b>P3–P4</b>: bảng nhân 6–9, phân số, diện tích–chu vi, góc; bài toán nhiều bước, "units" (phương pháp đơn vị).</li>
     <li><b>P5–P6</b>: phân số – tỉ số – phần trăm, PSLE: Paper 1 (không máy tính) & Paper 2 (bài toán heuristics). Nền móng P1 (tính nhẩm nhanh + bar model) quyết định rất nhiều.</li>
   </ul>
+  <h3>🌱 Kỹ năng sống & Công dân</h3>
+  <p>Ô <b>🌱 Life Skills</b> trên màn hình của bé: các tình huống "Nếu là con, con sẽ làm gì?" về tử tế – trung thực, cảm xúc, chuẩn bị vào P1, an toàn bản thân, xử lý khẩn cấp (cháy, bị thương, đuối nước…), giao thông, sống khoẻ, công dân tốt và an toàn trên mạng — bám theo 6 giá trị CCE của MOE Singapore (Tôn trọng, Trách nhiệm, Kiên cường, Chính trực, Quan tâm, Hoà hợp). Bé chọn → được giải thích vì sao lựa chọn đó tốt/chưa tốt → thử lại → nhận một câu "ghi nhớ". Mỗi ngày nên chơi <b>1 lượt "Câu chuyện hôm nay" (~5 phút)</b>; thẻ bé chọn sai sẽ tự quay lại vào hôm sau, thẻ đã chọn đúng quay lại sau vài ngày–vài tuần để nhớ lâu. Thẻ có cả tiếng Anh và tiếng Việt; xem tab <b>🌱 Kỹ năng sống</b> để biết nên trò chuyện với con điều gì.</p>
   <h3>🖤 Máy đọc sách e-ink (đen trắng)</h3>
   <p>Trên máy e-ink chạy Android (Boox, Bigme, Meebook…), mở trang bằng Chrome rồi chọn <b>Cài đặt → Giao diện → Đen trắng (e-ink)</b>. Mọi hình minh hoạ chuyển sang hoa văn đen trắng dễ nhìn, không có hiệu ứng chuyển động gây nháy màn hình. (Trình duyệt có sẵn của Kindle/Kobo quá cũ nên không chạy được.)</p>
   <h3>📱 Cài như ứng dụng (iPad, điện thoại, máy tính)</h3>
@@ -382,6 +474,23 @@ function guideTab() {
 
 // ------------------------------------------------------------------ bindings
 function bindTab(root, tab, child, arg) {
+  if (tab === 'life' && child) {
+    const f = root.querySelector('form[data-form="life"]');
+    f?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fd = new FormData(f);
+      const s = child.state.settings;
+      s.lifeLang = fd.get('lifeLang') === 'vi' ? 'vi' : 'en';
+      s.region = fd.get('region') === 'VN' ? 'VN' : 'SG';
+      const on_ = new Set(fd.getAll('topic'));
+      s.lifeOff = LIFE_TOPICS.filter((t) => !on_.has(t.id)).map((t) => t.id);
+      s.at = Date.now();
+      store.touch(child);
+      syncNow();
+      toast('Đã lưu cài đặt Kỹ năng sống ✅');
+      render(root, tab, arg);
+    });
+  }
   if (tab === 'history') {
     on(root, '[data-day]', async (b) => {
       b.disabled = true;
@@ -389,7 +498,7 @@ function bindTab(root, tab, child, arg) {
         const res = await fetchDay(child.id, b.dataset.day);
         const rows = (res.attempts || [])
           .map(
-            (x) => `<tr class="${x.ok ? '' : 'miss'}"><td>${new Date(x.ts).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</td><td>${esc(getSkill(x.skill)?.vi || x.skill)}<div class="small muted">${esc(x.q || '')}</div></td><td>${x.ok ? '✅' : x.given === x.answer ? '🟡' : '❌'} ${esc(x.given || '')}</td><td>${esc(x.answer || '')}</td><td class="num">${Math.round(x.ms / 1000)}s</td></tr>`
+            (x) => `<tr class="${x.ok ? '' : 'miss'}"><td>${new Date(x.ts).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</td><td>${esc(skillVi(x.skill))}<div class="small muted">${esc(x.q || '')}</div></td><td>${x.ok ? '✅' : x.given === x.answer ? '🟡' : '❌'} ${esc(x.given || '')}</td><td>${esc(x.answer || '')}</td><td class="num">${Math.round(x.ms / 1000)}s</td></tr>`
           )
           .join('');
         modal(`<h2>Chi tiết ngày ${esc(b.dataset.day)}</h2><p class="small muted">✅ đúng ngay · 🟡 đúng sau khi sửa · ❌ sai</p><div class="table-wrap"><table class="tbl"><thead><tr><th>Giờ</th><th>Câu hỏi</th><th>Bé trả lời</th><th>Đáp án</th><th>Thời gian</th></tr></thead><tbody>${rows || '<tr><td colspan="5">Chưa có dữ liệu trên đám mây cho ngày này.</td></tr>'}</tbody></table></div><button type="button" class="btn" data-close>Đóng</button>`, { wide: true });

@@ -52,9 +52,11 @@ export function mount(root) {
         <span class="t-icon">🚀</span><b>Today's Mission</b><small>Mission ${(today.m || 0) + 1} · 12 questions picked just for you</small>
       </a>
       <a class="tile-big t-map" href="#/map"><span class="t-icon">🗺️</span><b>Learning Map</b><small>Choose any topic</small></a>
+      <a class="tile-big t-life" href="#/life"><span class="t-icon">🌱</span><b>Life Skills</b><small>What would you do? · Be kind, brave & safe</small></a>
       <a class="tile-big t-sprint" href="#/sprint"><span class="t-icon">⚡</span><b>Speed Sprint</b><small>How many in 1 minute?</small></a>
       <a class="tile-big t-think" href="#/play/challenge"><span class="t-icon">🧠</span><b>Thinking Cap</b><small>Puzzles for clever minds</small></a>
-      ${hasMistakes ? `<a class="tile-big t-review" href="#/play/review"><span class="t-icon">🔁</span><b>Fix my mistakes</b><small>Try similar questions again</small></a>` : `<a class="tile-big t-rewards" href="#/rewards"><span class="t-icon">🎁</span><b>Rewards</b><small>${s.stickers.length} stickers · ⭐ ${s.stars}</small></a>`}
+      ${hasMistakes ? `<a class="tile-big t-review" href="#/play/review"><span class="t-icon">🔁</span><b>Fix my mistakes</b><small>Try similar questions again</small></a>` : ''}
+      <a class="tile-big t-rewards${hasMistakes ? '' : ' wide'}" href="#/rewards"><span class="t-icon">🎁</span><b>Rewards</b><small>${s.stickers.length} stickers · ⭐ ${s.stars}</small></a>
     </section>
 
     <section class="card now-learning">

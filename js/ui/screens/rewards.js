@@ -2,9 +2,10 @@
 import { store } from '../../core/store.js';
 import { SKILLS } from '../../content/curriculum.js';
 import { STRANDS } from '../../content/meta.js';
+import { LIFE_TOPICS } from '../../content/life/index.js';
 import { SHOP, TROPHIES, stickerFor, petLevel, petTitle } from '../../core/progress.js';
 import { kidHeader, mascotHTML } from '../parts.js';
-import { esc, on, toast } from '../dom.js';
+import { esc, on, toast, resetListeners } from '../dom.js';
 import { sfx } from '../../core/sound.js';
 import { scheduleSync } from '../../core/sync.js';
 
@@ -31,6 +32,18 @@ export function mount(root, [tab = 'stickers']) {
       }
       return `<section class="album card" style="--c:${strand.color}"><h2>${strand.icon} ${esc(strand.name)} <small>${got} / ${list.length * 3}</small></h2><div class="stk-grid">${cells.join('')}</div></section>`;
     }).join('');
+    if (LIFE_TOPICS.length) {
+      let got = 0;
+      const cells = [];
+      for (const k of LIFE_TOPICS) {
+        for (let star = 1; star <= 3; star++) {
+          const has = owned.has(`${k.id}#${star}`);
+          if (has) got++;
+          cells.push(`<span class="stk ${has ? 'got' : ''}" title="${esc(k.title)} ${'★'.repeat(star)}">${has ? stickerFor(k, star) : '?'}</span>`);
+        }
+      }
+      body += `<section class="album card" style="--c:#16a34a"><h2>🌱 Life Skills <small>${got} / ${LIFE_TOPICS.length * 3}</small></h2><div class="stk-grid">${cells.join('')}</div></section>`;
+    }
     body = `<p class="center muted">Earn a sticker for every ★ you get on a skill. Collect them all!</p>${body}`;
   } else if (tab === 'shop') {
     body = `<div class="shop-grid">${SHOP.map((it) => {
@@ -79,6 +92,7 @@ export function mount(root, [tab = 'stickers']) {
     }
     store.touch(child);
     scheduleSync(20000);
+    resetListeners(root);
     mount(root, [tab]);
   });
 }

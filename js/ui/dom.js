@@ -11,11 +11,22 @@ export function el(html) {
 }
 
 /** Delegated click handling: on(root, '[data-act]', (el, ev) => ...) */
+/** Delegated event handler. Handlers live until resetListeners(root) — the router calls it before every screen. */
 export function on(root, selector, handler, type = 'click') {
-  root.addEventListener(type, (ev) => {
-    const t = ev.target.closest(selector);
-    if (t && root.contains(t)) handler(t, ev);
-  });
+  root.addEventListener(
+    type,
+    (ev) => {
+      const t = ev.target.closest(selector);
+      if (t && root.contains(t)) handler(t, ev);
+    },
+    root.__listeners ? { signal: root.__listeners.signal } : undefined
+  );
+}
+
+/** Drop every handler added with on(root, …) so a re-rendered screen doesn't stack duplicates. */
+export function resetListeners(root) {
+  root.__listeners?.abort();
+  root.__listeners = new AbortController();
 }
 
 let toastTimer = null;

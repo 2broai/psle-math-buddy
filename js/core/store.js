@@ -12,6 +12,9 @@ export const DEFAULT_SETTINGS = {
   autoRead: true, // read every question aloud
   input: 'auto', // 'auto' | 'choices' (always multiple choice)
   sound: true,
+  lifeLang: 'en', // Life Skills cards: 'en' | 'vi'
+  region: 'SG', // emergency numbers in Life Skills: 'SG' | 'VN'
+  lifeOff: [], // Life Skills topic ids switched off by the parent
   at: 0 // last change time (for merging between devices)
 };
 
@@ -49,6 +52,7 @@ export function newChildState() {
     sprint: {},
     mistakes: [],
     levelOverride: null,
+    life: { seen: {}, log: [] }, // Life Skills: per-card {n, ok, last, box}; recent not-first-try answers
     profileAt: Date.now(),
     settings: { ...DEFAULT_SETTINGS }
   };
@@ -61,6 +65,9 @@ export function normalizeState(s) {
   for (const k of ['skills', 'daily', 'sprint', 'equip']) out[k] = { ...((s && s[k]) || {}) };
   for (const k of ['stickers', 'trophies', 'owned', 'mistakes']) out[k] = Array.isArray(s && s[k]) ? [...s[k]] : [];
   out.streak = { ...base.streak, ...((s && s.streak) || {}) };
+  out.settings.lifeOff = Array.isArray(out.settings.lifeOff) ? [...out.settings.lifeOff] : [];
+  const life = (s && s.life) || {};
+  out.life = { seen: { ...(life.seen || {}) }, log: Array.isArray(life.log) ? [...life.log] : [] };
   return out;
 }
 

@@ -50,20 +50,24 @@ export function sfx(kind) {
 }
 
 // ------------------------------------------------------------------ speech
-let voice = null;
-function pickVoice() {
+// English questions use an en-SG/en-GB voice; Life Skills cards can also be read in Vietnamese.
+const voices = {};
+const PREFS = {
+  en: [/en-SG/i, /en-GB/i, /en-AU/i, /en-US/i, /^en/i],
+  vi: [/vi-VN/i, /^vi/i]
+};
+function pickVoice(lang = 'en') {
   if (!('speechSynthesis' in window)) return null;
   const vs = window.speechSynthesis.getVoices();
-  const prefs = [/en-SG/i, /en-GB/i, /en-AU/i, /en-US/i, /^en/i];
-  for (const re of prefs) {
-    const v = vs.find((x) => re.test(x.lang) && /female|samantha|karen|serena|moira|kate|google/i.test(x.name)) || vs.find((x) => re.test(x.lang));
+  for (const re of PREFS[lang] || PREFS.en) {
+    const v = vs.find((x) => re.test(x.lang) && /female|samantha|karen|serena|moira|kate|linh|google/i.test(x.name)) || vs.find((x) => re.test(x.lang));
     if (v) return v;
   }
   return null;
 }
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   window.speechSynthesis.onvoiceschanged = () => {
-    voice = pickVoice();
+    for (const k of Object.keys(voices)) delete voices[k];
   };
 }
 
@@ -71,23 +75,50 @@ export function canSpeak() {
   return typeof window !== 'undefined' && 'speechSynthesis' in window;
 }
 
-export function speak(text, { rate = 0.92 } = {}) {
+let queueToken = 0;
+function utter(text, { rate = 0.92, lang = 'en', raw = false } = {}) {
+  const u = new SpeechSynthesisUtterance(raw ? String(text) : toSpeech(text));
+  if (!voices[lang]) voices[lang] = pickVoice(lang);
+  const v = voices[lang];
+  if (v) u.voice = v;
+  u.lang = v?.lang || (lang === 'vi' ? 'vi-VN' : 'en-GB');
+  u.rate = rate;
+  u.pitch = 1.05;
+  return u;
+}
+
+/** Speak one text (cancels anything already speaking). raw = skip the maths speech rules. */
+export function speak(text, opts = {}) {
   if (!canSpeak() || !text) return;
   try {
+    queueToken++;
     const synth = window.speechSynthesis;
     synth.cancel();
-    const u = new SpeechSynthesisUtterance(toSpeech(text));
-    if (!voice) voice = pickVoice();
-    if (voice) u.voice = voice;
-    u.lang = voice?.lang || 'en-GB';
-    u.rate = rate;
-    u.pitch = 1.05;
-    synth.speak(u);
+    synth.speak(utter(text, opts));
+  } catch {
+    // speech not available
+  }
+}
+
+/** Speak several texts one after another; onStart(i) fires as each begins (for highlighting), onEnd() after the last. */
+export function speakQueue(texts, { onStart, onEnd, ...opts } = {}) {
+  if (!canSpeak() || !texts.length) return;
+  try {
+    const token = ++queueToken;
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    texts.forEach((t, i) => {
+      const u = utter(t, opts);
+      u.onstart = () => token === queueToken && onStart?.(i);
+      if (i === texts.length - 1) u.onend = () => token === queueToken && onEnd?.();
+      synth.speak(u);
+    });
   } catch {
     // speech not available
   }
 }
 
 export function stopSpeaking() {
+  queueToken++;
   if (canSpeak()) window.speechSynthesis.cancel();
 }

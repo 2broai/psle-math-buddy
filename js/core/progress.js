@@ -2,6 +2,7 @@
 // rewards (stars, XP, stickers, trophies) and the Daily Mission planner.
 import { SKILLS, getSkill } from '../content/curriculum.js';
 import { LEVEL_IDS } from '../content/meta.js';
+import { LIFE_TOPICS, getLifeTopic, isLifeId } from '../content/life/index.js';
 import { store, todayKey, dayKeyOffset, focusLevel, randomId } from './store.js';
 import { makeRng } from './rng.js';
 import { numChoices } from '../content/helpers.js';
@@ -54,21 +55,22 @@ const STICKER_POOLS = {
   measure: '🚗🚕🚙🚌🏎️🚓🚑🚒🚜🚲🛴🛵🚂🚄✈️🚁⛵🚤🚢🎢🎡🎠',
   geometry: '🐠🐟🐡🐙🦑🦐🦞🦀🐚🐳🐋🐬🦭🐢🪸🏝️⛱️🌊',
   data: '🌱🌿☘️🍀🌾🌵🌴🌳🌲🍃🍂🍁🌻🌷',
-  thinking: '🧙🦄🐉🧚🧞🧜🦸🦹🪄🎩🔮🏰🗡️🛡️👸🤴'
+  thinking: '🧙🦄🐉🧚🧞🧜🦸🦹🪄🎩🔮🏰🗡️🛡️👸🤴',
+  life: '🌈🦋🌻🐞🍀🌟💖🤝🎈🧸🪁🌷🐣🦜🐬🦉🐘🦒🐢🌞🌙⛄🎨🎵🧩🚲🛟🧯🩹🚦'
 };
 function poolFor(strand) {
   return [...new Intl.Segmenter('en', { granularity: 'grapheme' }).segment(STICKER_POOLS[strand] || STICKER_POOLS.numbers)].map((s) => s.segment);
 }
 export function stickerFor(skill, star) {
   const pool = poolFor(skill.strand);
-  const sameStrand = SKILLS.filter((s) => s.strand === skill.strand);
+  const sameStrand = skill.strand === 'life' ? LIFE_TOPICS : SKILLS.filter((s) => s.strand === skill.strand);
   const idx = sameStrand.indexOf(sameStrand.find((s) => s.id === skill.id));
   return pool[(idx * 3 + star - 1) % pool.length];
 }
 
 // ------------------------------------------------------------------ trophies
 const totalH = (s) => s.totalSec / 3600;
-const nSkills = (s, min) => Object.values(s.skills).filter((x) => (x.m || 0) >= min).length;
+const nSkills = (s, min) => Object.entries(s.skills).filter(([id, x]) => !isLifeId(id) && (x.m || 0) >= min).length;
 export const TROPHIES = [
   { id: 'first', icon: '🌱', name: 'First answer', vi: 'Câu trả lời đầu tiên', test: (s) => s.totalQ >= 1 },
   { id: 'q100', icon: '🥉', name: '100 questions', vi: '100 câu hỏi', test: (s) => s.totalQ >= 100 },
@@ -149,7 +151,7 @@ function bumpStreak(state, day) {
  * ok = correct on the first try. tries = number of taps/submissions.
  * Returns {stars, xp, events[]} where events describe unlocks to celebrate.
  */
-export function recordAnswer(child, { skill, tier, ok, solved = true, tries, ms, mode, q, given, firstGiven = null, answer, adapt = true }) {
+export function recordAnswer(child, { skill, tier, ok, solved = true, tries, ms, mode, q, given, firstGiven = null, answer, adapt = true, logMistake = true }) {
   const s = child.state;
   const day = todayKey();
   const events = [];
@@ -210,7 +212,7 @@ export function recordAnswer(child, { skill, tier, ok, solved = true, tries, ms,
 
   // stickers for new skill stars
   const starsAfter = starsOf(st);
-  const sk = getSkill(skill);
+  const sk = getSkill(skill) || getLifeTopic(skill);
   if (sk && starsAfter > starsBefore) {
     for (let k = starsBefore + 1; k <= starsAfter; k++) {
       const id = `${skill}#${k}`;
@@ -228,7 +230,7 @@ export function recordAnswer(child, { skill, tier, ok, solved = true, tries, ms,
     }
   }
   // mistakes log
-  if (!ok) {
+  if (!ok && logMistake) {
     s.mistakes.push({ id: randomId('m'), ts: Date.now(), skill, q: plainText(q), given: plainText(firstGiven ?? given).slice(0, 40), answer: plainText(answer).slice(0, 40), fixed: !!solved });
     if (s.mistakes.length > 150) s.mistakes = s.mistakes.slice(-150);
   }

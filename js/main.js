@@ -11,9 +11,12 @@ import * as play from './ui/screens/play.js';
 import * as sprint from './ui/screens/sprint.js';
 import * as rewards from './ui/screens/rewards.js';
 import * as parent from './ui/screens/parent.js';
+import * as life from './ui/screens/life.js';
+import * as story from './ui/screens/story.js';
+import { resetListeners } from './ui/dom.js';
 
-const ROUTES = { who, home, map, play, sprint, rewards, parent };
-const KID_ONLY = new Set(['home', 'map', 'play', 'sprint', 'rewards']);
+const ROUTES = { who, home, map, play, sprint, rewards, parent, life, story };
+const KID_ONLY = new Set(['home', 'map', 'play', 'sprint', 'rewards', 'life', 'story']);
 const root = document.getElementById('app');
 let current = null;
 
@@ -32,6 +35,7 @@ function route() {
   const child = store.active();
   setSoundEnabled(child ? child.state.settings.sound !== false : true);
   document.body.dataset.screen = name;
+  resetListeners(root);
   root.innerHTML = '';
   window.scrollTo(0, 0);
   try {

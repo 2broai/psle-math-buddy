@@ -8,7 +8,7 @@ import { join, relative } from 'node:path';
 import { createHash } from 'node:crypto';
 
 const ROOT = new URL('..', import.meta.url).pathname;
-const TOP = ['index.html', 'manifest.json', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
+const TOP = ['index.html', 'manifest.json', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'img/hero.webp'];
 
 function walk(dir) {
   return readdirSync(join(ROOT, dir)).flatMap((name) => {

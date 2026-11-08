@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merli — Life Skills backdrops</title>
+<link rel="stylesheet" href="../css/app.css">
+<style>
+  body { padding: 16px; background: #f1f5f9; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+  .cell h3 { margin: 4px 0; font-family: monospace; font-size: 14px; }
+  .cell .scene-pic { max-height: none; }
+</style>
+</head>
+<body>
+<div class="grid" id="g"></div>
+<script type="module">
+  import { BACKDROP_IDS, scenePic } from '../js/ui/visuals/scene.js';
+  const casts = [
+    [{ e: '🧒', you: true, think: '❓' }, { e: '👩', say: 'Hello! Can you help me?' }],
+    [{ e: '🧒', you: true }, { e: '🐕', size: 's' }, { e: '👨', size: 'l', say: 'Come with me!' }],
+    [{ e: '🧒', you: true, think: '😟' }]
+  ];
+  const special = {
+    tablet: [{ e: '🧒', you: true, x: 25, think: '❓' }, { e: '👤', screen: true, say: 'What is your address?' }],
+    pool: [{ e: '🧒', you: true }, { e: '🙋', up: 22, x: 72, think: '😨' }],
+    road: [{ e: '🧒', you: true, x: 20 }, { e: '⚽', size: 's', x: 70, up: 22 }]
+  };
+  document.getElementById('g').innerHTML = BACKDROP_IDS.map((id, i) =>
+    `<div class="cell"><h3>${id}</h3>${scenePic({ bg: id, cast: special[id] || casts[i % casts.length], props: i % 4 === 0 ? ['🍭'] : [] })}</div>`).join('');
+</script>
+</body>
+</html>

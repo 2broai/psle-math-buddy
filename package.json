@@ -6,7 +6,7 @@
   "description": "Singapore MOE K2–P3 maths practice platform (static site + Cloudflare Worker/D1 backend)",
   "scripts": {
     "build": "node tools/build-sw.mjs",
-    "test": "node tools/build-sw.mjs --check && node tests/validate.mjs",
+    "test": "node tools/build-sw.mjs --check && node tests/validate.mjs && node tests/validate-life.mjs",
     "serve": "python3 -m http.server 8080"
   }
 }

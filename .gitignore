@@ -4,3 +4,5 @@ node_modules/
 .DS_Store
 tests/out/
 .playwright-mcp/
+art/life/raw/
+art/life/*.log

@@ -28,7 +28,7 @@ export async function promptInstall() {
 
 /** True when a new version was installed while the child was busy; reload at the next safe moment. */
 export function reloadIfPending(screen) {
-  if (pendingReload && !['play', 'sprint'].includes(screen)) {
+  if (pendingReload && !['play', 'sprint', 'story'].includes(screen)) {
     pendingReload = false;
     location.reload();
     return true;
@@ -62,7 +62,7 @@ export function initPWA(onChange) {
       hadController = true; // first install — nothing old to replace; later changes are real updates
       return;
     }
-    if (['play', 'sprint'].includes(document.body.dataset.screen)) pendingReload = true;
+    if (['play', 'sprint', 'story'].includes(document.body.dataset.screen)) pendingReload = true;
     else location.reload();
   });
 }
