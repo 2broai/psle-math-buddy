@@ -14,8 +14,9 @@ const T = {
   en: {
     daily: "🌱 Today's stories",
     best: ['Great choice!', 'Yes — well done!', 'That’s the best way!', 'Super choice!', 'You got it!'],
-    ok: 'Good thinking — but there is an even better choice. Try again!',
-    no: 'Hmm, not the best idea. Try again!',
+    ok: 'Good thinking — but there is an even better choice.',
+    no: 'Hmm, not the best idea.',
+    again: 'Try again!',
     reveal: 'Here is the best choice:',
     remember: 'Remember',
     next: 'Next ▶',
@@ -37,8 +38,9 @@ const T = {
   vi: {
     daily: '🌱 Câu chuyện hôm nay',
     best: ['Lựa chọn tuyệt vời!', 'Đúng rồi, giỏi quá!', 'Đó là cách tốt nhất!', 'Con chọn rất hay!', 'Chính xác!'],
-    ok: 'Cũng được đấy — nhưng còn cách tốt hơn nữa. Con thử lại nhé!',
-    no: 'Ồ, cách này chưa ổn. Con thử lại nhé!',
+    ok: 'Cũng được đấy — nhưng còn cách tốt hơn nữa.',
+    no: 'Ồ, cách này chưa ổn.',
+    again: 'Con thử lại nhé!',
     reveal: 'Cách tốt nhất là:',
     remember: 'Con nhớ nhé',
     next: 'Tiếp ▶',
@@ -129,8 +131,10 @@ export function mount(root, [scope = 'daily']) {
   function verdictLine(c) {
     const t = T[lang];
     if (c.v === 'best') return `<b>🌟 ${esc(praise)}</b> `;
-    if (c.v === 'ok') return `<b>🙂 ${esc(t.ok)}</b> `;
-    return `<b>✋ ${esc(t.no)}</b> `;
+    // "Try again!" only while the child can still pick; not once the best choice has been shown
+    const again = state === 'done' ? '' : ` ${t.again}`;
+    if (c.v === 'ok') return `<b>🙂 ${esc(t.ok + again)}</b> `;
+    return `<b>✋ ${esc(t.no + again)}</b> `;
   }
 
   // Drawn picture (with speech bubbles on top) when there is one; the built-in scene picture otherwise
@@ -289,7 +293,7 @@ export function mount(root, [scope = 'daily']) {
     }
     render();
     qcard.querySelectorAll('.s-opt')[i]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    speak(`${c.whySay}. ${c.v === 'ok' ? T[lang].ok : T[lang].no}`, { lang, raw: true });
+    speak(`${c.whySay}. ${c.v === 'ok' ? T[lang].ok : T[lang].no} ${T[lang].again}`, { lang, raw: true });
   }
 
   function setLang(l) {
